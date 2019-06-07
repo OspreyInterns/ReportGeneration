@@ -1,0 +1,37 @@
+CMSWInjectionsID: int, number of each injection
+CMSWCaseID: int, case number
+TimeStamp: str, date and time of procedure
+SyringeRevision: str
+PMDVRevision: str
+IsAnInjection: int, boolean value 1 = true, 0 = false
+IsAspiratingContrast: int, boolean value 1 = true, 0 = false
+DyeVertDiameter: float, checks diameter
+SyringeDiameter: float, checks diameter
+StartingSyringePosition: int, used to record syringe movement
+EndingSyringePosition: int, used to record syringe movement
+LinearSyringeMovement: int, used to calculate volume
+SyringeVolumeInjectedOrAspirated: float
+StartingDyeVertPosition: int, used to record syringe movement
+EndingSDyeVertPosition: int, used to record syringe movement
+LinearDyeVertMovement: int, used to calculate volume
+DyeVertVolumeDiverted: float, total volume diverted
+DyeVertContrastVolumeDiverted: float, total contrast diverted
+PercentContrastSaved: int, the percent of contrast diverted
+InjectionVolumeToPatient: float, the total volume that went to the patient for an injection
+ContrastVolumeToPatient: float, the total contrast injected to the patient for an injection
+CumulativeContrastVolumeToPatient: float, sum of all contrast injected to patient for a case
+OtherVolumeToPatient: float, non-contrast volume from an injection
+PercentInjectionVolumeDiverted: float, Percentage of the total injection that was diverted
+StartingContrastPercentInSyringe: float, the percent of the fluid in the syringe that is contrast initially
+StartingContrastPercentInDyeVert: float, the percent of the fluid in the DyeVert that is contrast initially
+EndingContrastPercentInDyeVert: float, the percent of the fluid in the DyeVert that is contrast at the end
+Duration: int, ms*1000
+FlowRateToFromSyringe: float, flow rate out of syringe in mL/s
+FlowRateToPatient: float, flow rate into patient in mL/s
+PredominantContrastLinePressure: int, 0 = neutral pressure, 1 = positive pressure, 2 = negative pressure
+StartingDyeVertStopcockPosition: int
+IsSystemPaused: int, 1 = paused, 0 = running
+EndingContrastPercentInSyringe: float, the percent of the fluid in the syringe that is contrast at the end
+SyringeAddress: str
+PMDVAddress: str
+IsDeviceReplacement: int

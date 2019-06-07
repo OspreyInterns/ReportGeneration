@@ -1,15 +1,15 @@
 
 import sqlite3 as sqlite
 import openpyxl
-from openpyxl.styles import Alignment
-from openpyxl.styles import PatternFill
+from openpyxl.styles import Alignment, PatternFill
 
 # Reads from the injection table to sum up the injections
 
 
-def straight_to_patient(case_number: int, file_name):
+def straight_to_patient(case_number, file_name):
 
     _con = sqlite.connect(file_name)
+    mismatch = False
 
     with _con:
         contrast_inj = 0.
@@ -17,32 +17,32 @@ def straight_to_patient(case_number: int, file_name):
         _cur = _con.cursor()
         _cur.execute('SELECT * FROM CMSWInjections')
 
-        _cols = _cur.fetchall()
+        _rows = _cur.fetchall()
 
-        for _col in _cols:
-            if _col[1] == case_number and _col[5] == 1 and _col[18] == 0:
-                contrast_inj += _col[20]
-                if _col[17] != 0:
-                    print('Case', _col[1], 'contains a mismatch between % and volume diverted')
-            if _col[1] == case_number and _col[5] == 1 and _col[17] == 0:
-                alt_contrast_inj += _col[20]
-                if round(_col[12], 4) != round(_col[16] + _col[19], 4) and _col[30] == 0 and _col[32] == 0:
-                    if _col[29] != 0:
-                        print('Injection', _col[0], 'suspicious', _col[12], '!=', _col[16] + _col[19])
+        for _row in _rows:
+            if _row[1] == case_number and _row[5] == 1 and _row[18] == 0:
+                contrast_inj += _row[20]
+                if _row[17] != 0 and mismatch is False:
+                    print('Case', _row[1], 'contains a mismatch between % and volume diverted')
+                    mismatch = True
+            if _row[1] == case_number and _row[5] == 1 and _row[17] == 0:
+                alt_contrast_inj += _row[20]
+                if round(_row[12], 4) != round(_row[16] + _row[19], 4) and _row[30] == 0 and _row[32] == 0:
+                    if _row[29] != 0:
+                        print('Injection', _row[0], 'suspicious', _row[12], '!=', _row[16] + _row[19])
 
         return [contrast_inj, alt_contrast_inj]
 
 
 def excel_write(file_name, cmsw):
+
     con = sqlite.connect(file_name)
 
     with con:
 
         cur = con.cursor()
         cur.execute('SELECT * FROM CMSWCases')
-
         rows = cur.fetchall()
-
         check_cases = [('Case ID/Patient ID Field #', )]
 
         for row in rows:
