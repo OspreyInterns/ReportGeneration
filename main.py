@@ -7,7 +7,8 @@ import clinical_data
 # Main Method of project
 
 
-fileName = filedialog.askopenfilename(initialdir='C:\\', title='Select database file', filetypes=(('sqlite files','*.sqlite'),('all files','*.*')))
+fileName = filedialog.askopenfilename(initialdir='C:\\', title='Select database file', filetypes=(('sqlite files',
+                                                                                    '*.sqlite'),('all files','*.*')))
 CMSW = fileName[-23:-20]
 if CMSW[0] == '/':
     CMSW = CMSW.replace('/', '')
