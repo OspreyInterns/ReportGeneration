@@ -12,6 +12,7 @@ def straight_to_patient(case_number, file_name):
     mismatch = False
 
     with _con:
+
         contrast_inj = 0.
         alt_contrast_inj = 0
         _cur = _con.cursor()
