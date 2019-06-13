@@ -5,7 +5,7 @@ from tkinter import filedialog
 import tkinter as tk
 import clinical_data
 import sales_data
-
+import rods_rockin_data
 # Main Method of project
 
 class Application(tk.Frame):
@@ -24,11 +24,16 @@ class Application(tk.Frame):
         self.sales = tk.Button(self)
         self.sales['text'] = 'Generate Sales Report'
         self.sales['command'] = self.sales_report
-        self.sales.pack(side='right')
+        self.sales.pack(side='top')
+
+        self.rods = tk.Button(self)
+        self.rods['text'] = 'Generate Rod\'s\n Radical Report'
+        self.rods['command'] = self.rods_report
+        self.rods.pack(side='top')
 
         self.quit = tk.Button(self, text='QUIT', fg='red',
                               command=self.master.destroy)
-        self.quit.pack(side='bottom')
+        self.quit.pack(side='top')
 
     def clinical_report(self):
         fileName = filedialog.askopenfilename(initialdir='C:\\', title='Select database file',
@@ -49,6 +54,17 @@ class Application(tk.Frame):
                 file = file.replace('/', '')
             CMSWs.append(file[-23:-20])
         sales_data.excel_write(fileNames, CMSWs)
+
+    def rods_report(self):
+        CMSWs = []
+        fileNames = filedialog.askopenfilenames(title='Select database file',
+                                                    filetypes=(('sqlite files', '*.sqlite'), ('all files', '*.*')))
+        fileNames = list(fileNames)
+        for file in fileNames:
+            if '/' in file:
+                file = file.replace('/', '')
+            CMSWs.append(file[-23:-20])
+        rods_rockin_data.excel_write(fileNames, CMSWs)
 
 
 root = tk.Tk()
