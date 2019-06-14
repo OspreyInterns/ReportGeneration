@@ -103,7 +103,7 @@ def list_builder(file_names):
                 else:
                     color = 0
                 cases.append((color, row[5][0:10], row[5][11:22], row[8], row[13], row[15], row[14], row[16],
-                              '', uses[0], uses[1], uses[2], uses[3]))
+                              uses[0], uses[1], uses[2], uses[3], int(row[3])))
     cases.sort(key=sort_criteria)
 
     return cases
