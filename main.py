@@ -1,21 +1,25 @@
 # Read SQLite file, then calculate the contrast straight to the patient, output to .xlsx
 
-
 from tkinter import filedialog
 import tkinter as tk
 import clinical_data
 import sales_data
 import rods_rockin_data
+
 # Main Method of project
 
+
 class Application(tk.Frame):
+
     def __init__(self, master=None):
+
         super().__init__(master)
         self.master = master
         self.pack()
         self.create_widgets()
 
     def create_widgets(self):
+
         self.clinical = tk.Button(self)
         self.clinical['text'] = 'Generate Clinical Report'
         self.clinical['command'] = self.clinical_report
@@ -36,35 +40,40 @@ class Application(tk.Frame):
         self.quit.pack(side='top')
 
     def clinical_report(self):
-        fileName = filedialog.askopenfilename(initialdir='C:\\', title='Select database file',
-                                                  filetypes=(('sqlite files',
-                                                              '*.sqlite'), ('all files', '*.*')))
-        CMSW = fileName[-23:-20]
-        if CMSW[0] == '/':
-            CMSW = CMSW.replace('/', '')
-        clinical_data.excel_write(fileName, CMSW)
+
+        file_name = filedialog.askopenfilename(initialdir='C:\\', title='Select database file',
+                                               filetypes=(('sqlite files', '*.sqlite'), ('all files', '*.*')))
+        cmsw = file_name[-23:-20]
+        if cmsw[0] == '/':
+            cmsw = cmsw.replace('/', '')
+        clinical_data.excel_write(file_name, cmsw)
+        print('Done')
 
     def sales_report(self):
-        CMSWs = []
-        fileNames = filedialog.askopenfilenames(title='Select database file',
-                                                  filetypes=(('sqlite files','*.sqlite'), ('all files', '*.*')))
-        fileNames = list(fileNames)
-        for file in fileNames:
+
+        cmsws = []
+        file_names = filedialog.askopenfilenames(title='Select database file',
+                                                 filetypes=(('sqlite files', '*.sqlite'), ('all files', '*.*')))
+        file_names = list(file_names)
+        for file in file_names:
             if '/' in file:
                 file = file.replace('/', '')
-            CMSWs.append(file[-23:-20])
-        sales_data.excel_write(fileNames, CMSWs)
+            cmsws.append(file[-23:-20])
+        sales_data.excel_write(file_names, cmsws)
+        print('Done')
 
     def rods_report(self):
-        CMSWs = []
-        fileNames = filedialog.askopenfilenames(title='Select database file',
-                                                    filetypes=(('sqlite files', '*.sqlite'), ('all files', '*.*')))
-        fileNames = list(fileNames)
-        for file in fileNames:
+
+        cmsws = []
+        file_names = filedialog.askopenfilenames(title='Select database file',
+                                                 filetypes=(('sqlite files', '*.sqlite'), ('all files', '*.*')))
+        file_names = list(file_names)
+        for file in file_names:
             if '/' in file:
                 file = file.replace('/', '')
-            CMSWs.append(file[-23:-20])
-        rods_rockin_data.excel_write(fileNames, CMSWs)
+            cmsws.append(file[-23:-20])
+        rods_rockin_data.excel_write(file_names, cmsws)
+        print('Done')
 
 
 root = tk.Tk()

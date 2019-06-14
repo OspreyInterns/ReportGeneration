@@ -65,6 +65,7 @@ def excel_write(file_name, cmsw):
     wb = openpyxl.load_workbook('F173-A_template-DyeMINISH Display Data Summary.xlsx')
     data_sheet = wb.active
     data_sheet.title = 'Sheet1'
+
     for row in range(len(check_cases)):
         for col in range(len(check_cases[row])):
             if row != 0 and float(check_cases[row][6]) <= 5.:

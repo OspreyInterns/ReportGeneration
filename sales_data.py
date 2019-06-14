@@ -49,17 +49,22 @@ def excel_write(file_names, cmsw):
     wb = openpyxl.load_workbook('Sales-Template.xlsx')
     data_sheet = wb.active
     data_sheet.title = 'Sheet1'
+
     for row in range(len(cases)):
         for col in range(len(cases[row])):
             data_sheet.cell(row=row + 17, column=col + 1, value=cases[row][col])
             data_sheet.cell(row=row + 17, column=col + 1).alignment = Alignment(wrapText=True)
+
     data_sheet.column_dimensions['A'].hidden = True
     wb.save(xlsx_name)
 
+
 def pptx_write(file_names, cmsw):
+
     cases = list_builder(file_names)
     color_count = [0, 0, 0, 0, 0]
     pptx_name = str(cmsw) + '-data-presentation'
+
     for case in cases:
         if case[0] == 0:
             color_count[0] += 1
