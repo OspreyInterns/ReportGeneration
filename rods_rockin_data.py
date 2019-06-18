@@ -67,7 +67,7 @@ def injection_table(file_names):
                         puff_inj = 'Puff'
                 cases.append([row[2], row[3], row[4], row[34], row[35], inj_asp, contrast_asp, replacement, row[7],
                               row[8], row[9], row[10], row[11], row[12], row[13], row[14], row[15], row[16],
-                              round(row[17], 3), row[18], row[19], round(row[20], 2), round(row[21], 2), row[22],
+                              round(row[17], 2), row[18], row[19], round(row[20], 2), round(row[21], 2), row[22],
                               row[24], row[33], row[25], row[26], row[27], round(row[28], 2), round(row[29], 2),
                               row[30], row[31], row[32], '', round(row[20]+row[17], 2), puff_inj])
 
@@ -103,7 +103,7 @@ def list_builder(file_names):
                 else:
                     color = 0
                 cases.append((color, row[5][0:10], row[5][11:22], row[8], row[13], row[15], row[14], row[16],
-                              uses[0], uses[1], uses[2], uses[3], int(row[3])))
+                              uses[1], uses[3], uses[0], uses[2], int(row[3])))
     cases.sort(key=sort_criteria)
 
     return cases
@@ -136,7 +136,7 @@ def dyevert_uses(case_number, file_name):
                 puff_inj = 1
             elif _row[28] <= 2:
                 puff_inj = 2
-            if _row[28] != 0 and _row[20] != 0:
+            if round(_row[28], 2) != 0 and round(_row[20], 2) != 0:
                 if _row[1] == case_number and _row[5] == 1 and _row[18] == 0 and puff_inj == 1:
                     dyevert_not_used_inj += 1
                     vol_not_used_inj += _row[20]
@@ -160,6 +160,7 @@ def excel_write(file_names, cmsw):
     wb = openpyxl.load_workbook('Rods-Template.xlsx')
     data_sheet = wb.active
     data_sheet.title = 'Sheet1'
+
     for row in range(len(cases)):
         for col in range(len(cases[row])):
             data_sheet.cell(row=row + 17, column=col + 1, value=cases[row][col])
@@ -190,7 +191,7 @@ def excel_write(file_names, cmsw):
                     data_sheet.cell(row=row + 4, column=col + 1).fill = PatternFill(
                         fill_type="solid", start_color='C5E1B3', end_color='C5E1B3')
                 if (injections[row][5] == 'ASP' and injections[row][6] != 'Yes') or \
-                        (injections[row][5] == 'INJ' and (injections[row][29] == 0 or not injections[row][21])):
+                        (injections[row][5] == 'INJ' and (injections[row][28] == 0 or injections[row][21] == 0)):
                     data_sheet.row_dimensions[row+4].hidden = True
             else:
                 data_sheet.cell(row=row + 4, column=col + 1, value=injections[row][col])

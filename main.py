@@ -13,6 +13,8 @@ class Application(tk.Frame):
 
     def __init__(self, master=None):
 
+        self.delete = tk.BooleanVar()
+
         super().__init__(master)
         self.master = master
         self.pack()
@@ -20,10 +22,17 @@ class Application(tk.Frame):
 
     def create_widgets(self):
 
-        self.clinical = tk.Button(self)
-        self.clinical['text'] = 'Generate Clinical Report'
-        self.clinical['command'] = self.clinical_report
-        self.clinical.pack(side='top')
+        self.dyeminishf = tk.Button(self)
+        self.dyeminishf['text'] = 'Generate Dyeminsh Report \n with flagging'
+        self.dyeminishf['command'] = self.dyeminish_report
+        self.dyeminishf.pack(side='top')
+
+        self.delete_flag = tk.Checkbutton(self)
+        self.delete_flag['text'] = 'Check to delete flagged entries'
+        self.delete_flag['variable'] = self.delete
+        self.delete_flag['onvalue'] = True
+        self.delete_flag['offvalue'] = False
+        self.delete_flag.pack(side='top')
 
         self.sales = tk.Button(self)
         self.sales['text'] = 'Generate Sales Report'
@@ -39,14 +48,17 @@ class Application(tk.Frame):
                               command=self.master.destroy)
         self.quit.pack(side='top')
 
-    def clinical_report(self):
+    def dyeminish_report(self):
 
-        file_name = filedialog.askopenfilename(initialdir='C:\\', title='Select database file',
+        file_name = filedialog.askopenfilename(title='Select database file',
                                                filetypes=(('sqlite files', '*.sqlite'), ('all files', '*.*')))
         cmsw = file_name[-23:-20]
         if cmsw[0] == '/':
             cmsw = cmsw.replace('/', '')
-        clinical_data.excel_write(file_name, cmsw)
+        if not self.delete.get():
+            clinical_data.excel_flag_write(file_name, cmsw)
+        else:
+            clinical_data.excel_destructive_write(file_name, cmsw)
         print('Done')
 
     def sales_report(self):

@@ -15,27 +15,64 @@ def straight_to_patient(case_number, file_name):
 
         contrast_inj = 0.
         alt_contrast_inj = 0
+        contrast_att = 0
         _cur = _con.cursor()
         _cur.execute('SELECT * FROM CMSWInjections')
 
         _rows = _cur.fetchall()
 
         for _row in _rows:
-            if _row[1] == case_number and _row[5] == 1 and _row[18] == 0:
+            if _row[1] == case_number and _row[5] == 1 and (_row[18] == 0 or _row[15] <= 20):
                 contrast_inj += _row[20]
+                contrast_att += _row[20] + _row[16]
                 if _row[17] != 0 and mismatch is False:
-                    print('Case', _row[1], 'contains a mismatch between % and volume diverted')
+                    #print('Case', _row[1], 'contains a mismatch between % and volume diverted')
                     mismatch = True
-            if _row[1] == case_number and _row[5] == 1 and _row[17] == 0:
+            if _row[1] == case_number and _row[5] == 1 and (_row[17] == 0 or _row[15] <= 20):
                 alt_contrast_inj += _row[20]
-                if round(_row[12], 4) != round(_row[16] + _row[19], 4) and _row[30] == 0 and _row[32] == 0:
-                    if _row[29] != 0:
-                        print('Injection', _row[0], 'suspicious', _row[12], '!=', _row[16] + _row[19])
+                #if round(_row[12], 4) != round(_row[16] + _row[19], 4) and _row[30] == 0 and _row[32] == 0:
+                    #if _row[29] != 0:
+                        #print('Injection', _row[0], 'suspicious', _row[12], '!=', _row[16] + _row[19])
 
-        return [contrast_inj, alt_contrast_inj]
+        return [contrast_inj, alt_contrast_inj, contrast_att]
 
 
-def excel_write(file_name, cmsw):
+def would_be_saved(file_name):
+
+    con = sqlite.connect(file_name)
+
+    with con:
+        cur = con.cursor()
+        cur.execute('SELECT * FROM CMSWCases')
+        rows = cur.fetchall()
+        case_info = []
+
+        for row in rows:
+            case_info.append([row[0], row[13], row[8], row[15]])
+
+    what_if = []
+
+    for case in case_info:
+        direct_injected = straight_to_patient(case[0], file_name)
+        vol_inj_off = direct_injected[0]
+        vol_inj_on = case[3] - vol_inj_off
+        vol_att_off = direct_injected[2]
+        vol_att_on = case[1] - vol_att_off
+        if vol_att_on != 0:
+            perc_savings_on = 1. - (vol_inj_on / vol_att_on)
+            would_be_total = vol_inj_on + (vol_inj_off * perc_savings_on)
+            if case[2] != 0:
+                would_be_portion = (would_be_total / case[2]) * 100
+            else:
+                would_be_portion = 0
+            what_if.append([would_be_total, would_be_portion])
+        else:
+            what_if.append([0, 0])
+
+    return what_if
+
+
+def list_builer(file_name):
 
     con = sqlite.connect(file_name)
 
@@ -44,41 +81,73 @@ def excel_write(file_name, cmsw):
         cur = con.cursor()
         cur.execute('SELECT * FROM CMSWCases')
         rows = cur.fetchall()
-        check_cases = [('Case ID/Patient ID Field #', )]
+        check_cases = []
+        what_if = would_be_saved(file_name)
 
         for row in rows:
             to_patient = straight_to_patient(row[0], file_name)
             if row[8] == 0:
                 perc_threshold = 'N/A'
             else:
-                perc_threshold = row[15]/row[8]*100
+                perc_threshold = row[15] / row[8] * 100
             if row[2] == '2.1.24':
-                check_cases.append(('', '', '', row[5][0:10], row[1][-12:-1], '', row[19], row[8], row[13],
-                                   row[14], row[15], row[16], perc_threshold, '', to_patient[0], '', '', to_patient[1],
-                                   to_patient[0] - to_patient[1]))
+                check_cases.append(('', '', '', row[5][0:10], row[1][-12:-4], '', row[19], row[8], row[13],
+                                    row[14], row[15], row[16], perc_threshold, '', to_patient[0], '', '', to_patient[1],
+                                    to_patient[0] - to_patient[1], what_if[row[0] - 1][0], what_if[row[0] - 1][1]))
             else:
-                check_cases.append(('', '', '', row[5][0:10], row[1][-12:-1], row[20][-8:-1], row[19], row[8], row[13],
-                                   row[14], row[15], row[16], perc_threshold, '', to_patient[0], '', '', to_patient[1],
-                                   to_patient[0]-to_patient[1]))
+                check_cases.append(('', '', '', row[5][0:10], row[1][-12:-4], row[20][-8:], row[19], row[8], row[13],
+                                    row[14], row[15], row[16], perc_threshold, '', to_patient[0], '', '', to_patient[1],
+                                    to_patient[0] - to_patient[1], what_if[row[0] - 1][0], what_if[row[0] - 1][1]))
 
-    xlsx_name = cmsw + 'DyeMinishOutput.xlsx'
-    wb = openpyxl.load_workbook('F173-A_template-DyeMINISH Display Data Summary.xlsx')
+        return check_cases
+
+
+def excel_flag_write(file_name, cmsw):
+
+    check_cases = list_builer(file_name)
+
+    xlsx_name = cmsw + 'DyeMinishFlaggedOutput.xlsx'
+    wb = openpyxl.load_workbook('Dyeminish-template.xlsx')
     data_sheet = wb.active
     data_sheet.title = 'Sheet1'
 
     for row in range(len(check_cases)):
         for col in range(len(check_cases[row])):
-            if row != 0 and float(check_cases[row][6]) <= 5.:
-                data_sheet.cell(row=row + 1, column=col + 1, value=check_cases[row][col]).fill = PatternFill(
+            if float(check_cases[row][6]) <= 5.:
+                data_sheet.cell(row=row + 2, column=col + 1, value=check_cases[row][col]).fill = PatternFill(
                     fill_type="solid", start_color='FFFF00', end_color='FFFF00')
-                data_sheet.cell(row=row + 1, column=16, value='Case less than 5 Minutes')
-            elif row != 0 and check_cases[row][8] == 0 and check_cases[row][9] == 0 and check_cases[row][10] == 0 \
+                data_sheet.cell(row=row + 2, column=16, value='Case less than 5 Minutes')
+            elif check_cases[row][8] == 0 and check_cases[row][9] == 0 and check_cases[row][10] == 0 \
                     and check_cases[row][11] == 0:
-                data_sheet.cell(row=row + 1, column=col + 1, value=check_cases[row][col]).fill = PatternFill(
+                data_sheet.cell(row=row + 2, column=col + 1, value=check_cases[row][col]).fill = PatternFill(
                     fill_type="solid", start_color='FFFF00', end_color='FFFF00')
-                data_sheet.cell(row=row + 1, column=16, value='No contrast injected')
+                data_sheet.cell(row=row + 2, column=16, value='No contrast injected')
             else:
-                data_sheet.cell(row=row + 1, column=col + 1, value=check_cases[row][col])
-            data_sheet.cell(row=row + 1, column=col + 1).alignment = Alignment(wrapText=True)
+                data_sheet.cell(row=row + 2, column=col + 1, value=check_cases[row][col])
+            data_sheet.cell(row=row + 2, column=col + 1).alignment = Alignment(wrapText=True)
+
+    wb.save(xlsx_name)
+
+
+def excel_destructive_write(file_name, cmsw):
+
+    check_cases = list_builer(file_name)
+    remove_cases = []
+    for case in check_cases:
+        if case[6] <= 5. or int(case[8]) == int(case[9]) == int(case[10]) == int(case[11]) == 0:
+            remove_cases.append(case)
+
+    for case in remove_cases:
+        check_cases.remove(case)
+
+    xlsx_name = cmsw + 'DyeMinishFilteredOutput.xlsx'
+    wb = openpyxl.load_workbook('Dyeminish-template.xlsx')
+    data_sheet = wb.active
+    data_sheet.title = 'Sheet1'
+
+    for row in range(len(check_cases)):
+        for col in range(len(check_cases[row])):
+            data_sheet.cell(row=row+2, column=col+1, value=check_cases[row][col])
+            data_sheet.cell(row=row+2, column=col+1).alignment = Alignment(wrapText=True)
 
     wb.save(xlsx_name)
