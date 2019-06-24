@@ -1,0 +1,24 @@
+0: CMSWDCaseID, int, numerical order of the cases
+1: CaseID, string, date/time and serial number
+2: SoftwareVersion, string, version of CMSW software
+3: SerialNumber, string, ID of the specific CMSW
+4: FacilityID, string, have yet to see a value
+5: DateOfProcedure, date/time, date/time of procedure start
+6: DyeVertUsed, int, indicates DyeVert or PM case
+7: DwellTime, int, always 500
+8: ThresholdVolume, float, physician entered contrast threshold
+9: NumInjectionsDyeVertOn, int, injections with contrast diverted
+10: NumInjectionsDyeVertOff, int, injections without contrast
+11: NumContrastAspirations, int, number of aspirations with contrast
+12: NumOtherAspirations, int, number of aspirations without contrast
+13: AttemptedContrastInjectionVolume, float, volume of contrast that went out from the syringe
+14: DivertedContrastVolume, float, volume of contrast that entered the DyeVert
+15: CumulativeVolumeToPatient, float, volume of contrast after diversion
+16: PercentageContrastDiverted, float, contrast diverted / contrast attempted
+17: TerminationOption, int, number indicating how the case ended
+18: StartTime, varies, either an int on version 2.1.24(UnixTime) or a date/time string on version 2.1.56
+19: TotalDuration, float, minutes of duration
+20: EndTime, str, NULL in 2.1.24 or string in 2.1.56, indicates date/time of end
+21: EndTimeUnix, int, NULL in 2.1.24 or int in 2.1.56(UnixTime)
+22: StartTimeUnix, int, NULL in 2.1.24 or int in 2.1.56(UnixTime)
+23: DyeVertEZ, int, indicates weather it was a plus or an EZ

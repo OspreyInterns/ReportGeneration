@@ -88,22 +88,20 @@ def list_builder(file_names):
             rows = cur.fetchall()
 
             for row in rows:
-                uses = dyevert_uses(row[0], file_name)
-                #  if row[19] <= 5 or row[13] == row[14] == row[15] == row[16] == 0:
-                #      pass
-                #  else:
-                if row[15] <= row[8] / 3 <= row[13]:
-                    color = 1
-                elif row[15] <= row[8] * 2 / 3 <= row[13]:
-                    color = 2
-                elif row[15] <= row[8] <= row[13]:
-                    color = 3
-                elif row[15] >= row[8] <= row[13]:
-                    color = 4
-                else:
-                    color = 0
-                cases.append((color, row[5][0:10], row[5][11:22], row[8], row[13], row[15], row[14], row[16],
-                              uses[1], uses[3], uses[0], uses[2], int(row[3])))
+                if not(row[19] <= 5) and not(row[13] == row[14] == row[15] == 0 and row[16] <= 1):
+                    uses = dyevert_uses(row[0], file_name)
+                    if row[15] <= row[8] / 3 <= row[13]:
+                        color = 1
+                    elif row[15] <= row[8] * 2 / 3 <= row[13]:
+                        color = 2
+                    elif row[15] <= row[8] <= row[13]:
+                        color = 3
+                    elif row[15] >= row[8] <= row[13]:
+                        color = 4
+                    else:
+                        color = 0
+                    cases.append((color, row[5][0:10], row[5][11:22], row[8], row[13], row[15], row[14], row[16],
+                                  uses[1], uses[3], uses[0], uses[2], int(row[3])))
     cases.sort(key=sort_criteria)
 
     return cases

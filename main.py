@@ -2,7 +2,7 @@
 
 from tkinter import filedialog
 import tkinter as tk
-import clinical_data
+import DyeMinish_data
 import sales_data
 import rods_rockin_data
 
@@ -18,14 +18,11 @@ class Application(tk.Frame):
         super().__init__(master)
         self.master = master
         self.pack()
-        self.create_widgets()
 
-    def create_widgets(self):
-
-        self.dyeminishf = tk.Button(self)
-        self.dyeminishf['text'] = 'Generate Dyeminsh Report \n with flagging'
-        self.dyeminishf['command'] = self.dyeminish_report
-        self.dyeminishf.pack(side='top')
+        self.dyeminish = tk.Button(self)
+        self.dyeminish['text'] = 'Generate Dyeminsh Report'
+        self.dyeminish['command'] = self.dyeminish_report
+        self.dyeminish.pack(side='top')
 
         self.delete_flag = tk.Checkbutton(self)
         self.delete_flag['text'] = 'Check to delete flagged entries'
@@ -56,34 +53,42 @@ class Application(tk.Frame):
         if cmsw[0] == '/':
             cmsw = cmsw.replace('/', '')
         if not self.delete.get():
-            clinical_data.excel_flag_write(file_name, cmsw)
+            DyeMinish_data.excel_flag_write(file_name, cmsw)
         else:
-            clinical_data.excel_destructive_write(file_name, cmsw)
+            DyeMinish_data.excel_destructive_write(file_name, cmsw)
         print('Done')
 
-    def sales_report(self):
+    @staticmethod
+    def sales_report():
 
         cmsws = []
+        case_number = 0
         file_names = filedialog.askopenfilenames(title='Select database file',
                                                  filetypes=(('sqlite files', '*.sqlite'), ('all files', '*.*')))
         file_names = list(file_names)
         for file in file_names:
-            if '/' in file:
-                file = file.replace('/', '')
             cmsws.append(file[-23:-20])
-        sales_data.excel_write(file_names, cmsws)
+        for cmsw in cmsws:
+            cmsw = cmsw.replace('/', '')
+            cmsws[case_number] = cmsw
+            case_number += 1
+        sales_data.write(file_names, cmsws)
         print('Done')
 
-    def rods_report(self):
+    @staticmethod
+    def rods_report():
 
         cmsws = []
+        case_number = 0
         file_names = filedialog.askopenfilenames(title='Select database file',
                                                  filetypes=(('sqlite files', '*.sqlite'), ('all files', '*.*')))
         file_names = list(file_names)
         for file in file_names:
-            if '/' in file:
-                file = file.replace('/', '')
             cmsws.append(file[-23:-20])
+        for cmsw in cmsws:
+            cmsw = cmsw.replace('/', '')
+            cmsws[case_number] = cmsw
+            case_number += 1
         rods_rockin_data.excel_write(file_names, cmsws)
         print('Done')
 

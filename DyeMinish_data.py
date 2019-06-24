@@ -9,32 +9,23 @@ from openpyxl.styles import Alignment, PatternFill
 def straight_to_patient(case_number, file_name):
 
     _con = sqlite.connect(file_name)
-    mismatch = False
 
     with _con:
 
         contrast_inj = 0.
         alt_contrast_inj = 0
-        contrast_att = 0
         _cur = _con.cursor()
         _cur.execute('SELECT * FROM CMSWInjections')
 
         _rows = _cur.fetchall()
 
         for _row in _rows:
-            if _row[1] == case_number and _row[5] == 1 and (_row[18] == 0 or _row[15] <= 20):
+            if _row[1] == case_number and _row[5] == 1 and (_row[18] == 0 or _row[15] <= 20) and _row[30] == 0:
                 contrast_inj += _row[20]
-                contrast_att += _row[20] + _row[16]
-                if _row[17] != 0 and mismatch is False:
-                    #print('Case', _row[1], 'contains a mismatch between % and volume diverted')
-                    mismatch = True
             if _row[1] == case_number and _row[5] == 1 and (_row[17] == 0 or _row[15] <= 20):
                 alt_contrast_inj += _row[20]
-                #if round(_row[12], 4) != round(_row[16] + _row[19], 4) and _row[30] == 0 and _row[32] == 0:
-                    #if _row[29] != 0:
-                        #print('Injection', _row[0], 'suspicious', _row[12], '!=', _row[16] + _row[19])
 
-        return [contrast_inj, alt_contrast_inj, contrast_att]
+        return [contrast_inj, alt_contrast_inj]
 
 
 def would_be_saved(file_name):
@@ -56,11 +47,13 @@ def would_be_saved(file_name):
         direct_injected = straight_to_patient(case[0], file_name)
         vol_inj_off = direct_injected[0]
         vol_inj_on = case[3] - vol_inj_off
-        vol_att_off = direct_injected[2]
+        vol_att_off = direct_injected[0]
         vol_att_on = case[1] - vol_att_off
+        print(vol_att_off, vol_att_on, vol_inj_off, vol_inj_on)
         if vol_att_on != 0:
             perc_savings_on = 1. - (vol_inj_on / vol_att_on)
-            would_be_total = vol_inj_on + (vol_inj_off * perc_savings_on)
+            print(perc_savings_on)
+            would_be_total = vol_inj_on + (vol_inj_off * (1. - perc_savings_on))
             if case[2] != 0:
                 would_be_portion = (would_be_total / case[2]) * 100
             else:
@@ -72,7 +65,7 @@ def would_be_saved(file_name):
     return what_if
 
 
-def list_builer(file_name):
+def list_builder(file_name):
 
     con = sqlite.connect(file_name)
 
@@ -92,19 +85,19 @@ def list_builer(file_name):
                 perc_threshold = row[15] / row[8] * 100
             if row[2] == '2.1.24':
                 check_cases.append(('', '', '', row[5][0:10], row[1][-12:-4], '', row[19], row[8], row[13],
-                                    row[14], row[15], row[16], perc_threshold, '', to_patient[0], '', '', to_patient[1],
-                                    to_patient[0] - to_patient[1], what_if[row[0] - 1][0], what_if[row[0] - 1][1]))
+                                    row[14], row[15], row[16], perc_threshold, '', to_patient[0], '', '',
+                                    what_if[row[0] - 1][0], what_if[row[0] - 1][1]))
             else:
                 check_cases.append(('', '', '', row[5][0:10], row[1][-12:-4], row[20][-8:], row[19], row[8], row[13],
-                                    row[14], row[15], row[16], perc_threshold, '', to_patient[0], '', '', to_patient[1],
-                                    to_patient[0] - to_patient[1], what_if[row[0] - 1][0], what_if[row[0] - 1][1]))
+                                    row[14], row[15], row[16], perc_threshold, '', to_patient[0], '', '',
+                                    what_if[row[0] - 1][0], what_if[row[0] - 1][1]))
 
         return check_cases
 
 
 def excel_flag_write(file_name, cmsw):
 
-    check_cases = list_builer(file_name)
+    check_cases = list_builder(file_name)
 
     xlsx_name = cmsw + 'DyeMinishFlaggedOutput.xlsx'
     wb = openpyxl.load_workbook('Dyeminish-template.xlsx')
@@ -131,7 +124,7 @@ def excel_flag_write(file_name, cmsw):
 
 def excel_destructive_write(file_name, cmsw):
 
-    check_cases = list_builer(file_name)
+    check_cases = list_builder(file_name)
     remove_cases = []
     for case in check_cases:
         if case[6] <= 5. or int(case[8]) == int(case[9]) == int(case[10]) == int(case[11]) == 0:
