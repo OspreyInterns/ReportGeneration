@@ -6,7 +6,7 @@ import DyeMinish_data
 import sales_data
 import rods_rockin_data
 
-# Main Method of project
+# Main Method of project, creates UI and takes input to pass to functions
 
 
 class Application(tk.Frame):
@@ -47,15 +47,16 @@ class Application(tk.Frame):
 
     def dyeminish_report(self):
 
-        file_name = filedialog.askopenfilename(title='Select database file',
-                                               filetypes=(('sqlite files', '*.sqlite'), ('all files', '*.*')))
-        cmsw = file_name[-23:-20]
-        if cmsw[0] == '/':
-            cmsw = cmsw.replace('/', '')
-        if not self.delete.get():
-            DyeMinish_data.excel_flag_write(file_name, cmsw)
-        else:
-            DyeMinish_data.excel_destructive_write(file_name, cmsw)
+        file_names = filedialog.askopenfilenames(title='Select database file',
+                                                 filetypes=(('sqlite files', '*.sqlite'), ('all files', '*.*')))
+        for file_name in file_names:
+            cmsw = file_name[-23:-20]
+            if cmsw[0] == '/':
+                cmsw = cmsw.replace('/', '')
+            if not self.delete.get():
+                DyeMinish_data.excel_flag_write(file_name, cmsw)
+            else:
+                DyeMinish_data.excel_destructive_write(file_name, cmsw)
         print('Done')
 
     @staticmethod

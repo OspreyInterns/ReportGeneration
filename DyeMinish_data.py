@@ -6,26 +6,27 @@ from openpyxl.styles import Alignment, PatternFill
 # Reads from the injection table to sum up the injections
 
 
-def straight_to_patient(case_number, file_name):
+def straight_to_patient(file_name):
 
     _con = sqlite.connect(file_name)
 
     with _con:
 
-        contrast_inj = 0.
-        alt_contrast_inj = 0
+        contrast_inj = []
         _cur = _con.cursor()
         _cur.execute('SELECT * FROM CMSWInjections')
 
         _rows = _cur.fetchall()
 
+        for n in range(len(_rows)):
+            contrast_inj.append([0, 0])
         for _row in _rows:
-            if _row[1] == case_number and _row[5] == 1 and (_row[18] == 0 or _row[15] <= 20) and _row[30] == 0:
-                contrast_inj += _row[20]
-            if _row[1] == case_number and _row[5] == 1 and (_row[17] == 0 or _row[15] <= 20):
-                alt_contrast_inj += _row[20]
+            if _row[5] == 1 and (_row[18] <= 1 or _row[15] <= 20) and _row[30] == 0:
+                contrast_inj[_row[1]-1][0] += _row[20]
+            if _row[5] == 1 and (_row[17] == 0 or _row[15] <= 20):
+                contrast_inj[_row[1]-1][1] += _row[20]
 
-        return [contrast_inj, alt_contrast_inj]
+        return contrast_inj
 
 
 def would_be_saved(file_name):
@@ -42,17 +43,14 @@ def would_be_saved(file_name):
             case_info.append([row[0], row[13], row[8], row[15]])
 
     what_if = []
+    direct_injected = straight_to_patient(file_name)
 
     for case in case_info:
-        direct_injected = straight_to_patient(case[0], file_name)
-        vol_inj_off = direct_injected[0]
+        vol_inj_off = direct_injected[case[0]-1][0]
         vol_inj_on = case[3] - vol_inj_off
-        vol_att_off = direct_injected[0]
-        vol_att_on = case[1] - vol_att_off
-        print(vol_att_off, vol_att_on, vol_inj_off, vol_inj_on)
+        vol_att_on = case[1] - vol_inj_off
         if vol_att_on != 0:
             perc_savings_on = 1. - (vol_inj_on / vol_att_on)
-            print(perc_savings_on)
             would_be_total = vol_inj_on + (vol_inj_off * (1. - perc_savings_on))
             if case[2] != 0:
                 would_be_portion = (would_be_total / case[2]) * 100
@@ -60,7 +58,7 @@ def would_be_saved(file_name):
                 would_be_portion = 0
             what_if.append([would_be_total, would_be_portion])
         else:
-            what_if.append([0, 0])
+            what_if.append([vol_inj_off, vol_inj_off/case[2]])
 
     return what_if
 
@@ -76,20 +74,20 @@ def list_builder(file_name):
         rows = cur.fetchall()
         check_cases = []
         what_if = would_be_saved(file_name)
+        to_patient = straight_to_patient(file_name)
 
         for row in rows:
-            to_patient = straight_to_patient(row[0], file_name)
             if row[8] == 0:
                 perc_threshold = 'N/A'
             else:
                 perc_threshold = row[15] / row[8] * 100
             if row[2] == '2.1.24':
                 check_cases.append(('', '', '', row[5][0:10], row[1][-12:-4], '', row[19], row[8], row[13],
-                                    row[14], row[15], row[16], perc_threshold, '', to_patient[0], '', '',
+                                    row[14], row[15], row[16], perc_threshold, '', to_patient[row[0]-1][0], '', '',
                                     what_if[row[0] - 1][0], what_if[row[0] - 1][1]))
             else:
                 check_cases.append(('', '', '', row[5][0:10], row[1][-12:-4], row[20][-8:], row[19], row[8], row[13],
-                                    row[14], row[15], row[16], perc_threshold, '', to_patient[0], '', '',
+                                    row[14], row[15], row[16], perc_threshold, '', to_patient[row[0]-1][0], '', '',
                                     what_if[row[0] - 1][0], what_if[row[0] - 1][1]))
 
         return check_cases
