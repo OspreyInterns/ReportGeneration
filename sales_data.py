@@ -7,15 +7,16 @@ from pptx.chart.data import CategoryChartData
 from pptx.enum.text import PP_ALIGN
 from pptx.util import Pt
 
-# Write data for sales team to appropriate template
+# Write data for sales team to appropriate templates for power point and
 
 
 def sort_criteria(case):
+    """reads info for a sort"""
     return case[1], case[2]
 
 
 def list_builder(file_names):
-
+    """Takes the list of files and builds the list of lists to write"""
     cases = []
 
     for file_name in file_names:
@@ -33,7 +34,7 @@ def list_builder(file_names):
                 else:
                     if row[15] <= row[8] / 3 <= row[13]:
                         color = 1
-                    elif row[15] <= row[8] * 2 / 3 <= row[13]:
+                    elif row[15] <= row[8] * 2/3 <= row[13]:
                         color = 2
                     elif row[15] <= row[8] <= row[13]:
                         color = 3
@@ -47,7 +48,14 @@ def list_builder(file_names):
 
 
 def write(file_names, cmsw):
-
+    """Writes data into the an Excel Sheet and a Power Point slide as seen in the example
+    Takes two inputs:
+        -the file names of the CMSW databases
+        -the serial numbers of the CMSWs
+    Generates two files:
+        -The summary table
+        -The Power Point slide, which was copied from the example
+    """
     cases = list_builder(file_names)
     xlsx_name = str(cmsw) + '-data-tables.xlsx'
     wb = openpyxl.load_workbook('Sales-Template.xlsx')

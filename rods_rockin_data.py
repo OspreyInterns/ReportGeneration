@@ -7,12 +7,14 @@ from openpyxl.styles import Alignment, Font, PatternFill
 
 
 def sort_criteria(case):
-
+    """reads info for a sort"""
     return case[1], case[2]
 
 
 def injection_table(file_names):
-
+    """Connects to an individual database and determines which injections were puffs, injections,
+    and leaves some uncatagorized to be classified by a person looking at the surrounding data
+    """
     cases = []
     case_number = 0
 
@@ -75,7 +77,7 @@ def injection_table(file_names):
 
 
 def list_builder(file_names):
-
+    """Takes the list of files and builds the list of lists to write"""
     cases = []
 
     for file_name in file_names:
@@ -88,8 +90,8 @@ def list_builder(file_names):
             rows = cur.fetchall()
 
             for row in rows:
+                uses = dyevert_uses(file_name)
                 if not(row[19] <= 5) and not(row[13] == row[14] == row[15] == 0 and row[16] <= 1):
-                    uses = dyevert_uses(row[0], file_name)
                     if row[15] <= row[8] / 3 <= row[13]:
                         color = 1
                     elif row[15] <= row[8] * 2 / 3 <= row[13]:
@@ -101,14 +103,17 @@ def list_builder(file_names):
                     else:
                         color = 0
                     cases.append((color, row[5][0:10], row[5][11:22], row[8], row[13], row[15], row[14], row[16],
-                                  uses[1], uses[3], uses[0], uses[2], int(row[3])))
+                                  uses[row[0]][1], uses[row[0]][3], uses[row[0]][0], uses[row[0]][2], int(row[3])))
     cases.sort(key=sort_criteria)
 
     return cases
 
 
-def dyevert_uses(case_number, file_name):
-
+def dyevert_uses(file_name):
+    """Connects to an individual database to calculate the volume of contrast injected
+    and the number of times contrast was injected both in puffs and injections
+    Volume data is currently unused
+    """
     _con = sqlite.connect(file_name)
     dyevert_used_inj = 0
     dyevert_not_used_inj = 0
@@ -118,6 +123,8 @@ def dyevert_uses(case_number, file_name):
     vol_not_used_inj = 0
     vol_used_puff = 0
     vol_not_used_puff = 0
+    case_number = 0
+    uses = []
 
     with _con:
 
@@ -125,34 +132,57 @@ def dyevert_uses(case_number, file_name):
         _cur.execute('SELECT * FROM CMSWInjections')
         _rows = _cur.fetchall()
 
+        for iter in range(_rows[-1][1]+1):
+            uses.append([0, 0, 0, 0])
         for _row in _rows:
-            if _row[20] + _row[17] >= 3:
-                puff_inj = 1
-            elif _row[20] + _row[17] <= 2:
-                puff_inj = 2
-            elif _row[28] >= 2.5:
-                puff_inj = 1
-            elif _row[28] <= 2:
-                puff_inj = 2
-            if round(_row[28], 2) != 0 and round(_row[20], 2) != 0:
-                if _row[1] == case_number and _row[5] == 1 and _row[18] == 0 and puff_inj == 1:
-                    dyevert_not_used_inj += 1
-                    vol_not_used_inj += _row[20]
-                elif _row[1] == case_number and _row[5] == 1 and puff_inj == 1:
-                    dyevert_used_inj += 1
-                    vol_used_inj += _row[20]
-                elif _row[1] == case_number and _row[5] == 1 and _row[18] == 0 and puff_inj == 2:
-                    dyevert_not_used_puff += 1
-                    vol_not_used_puff += _row[20]
-                elif _row[1] == case_number and _row[5] == 1 and puff_inj == 2:
-                    dyevert_used_puff += 1
-                    vol_used_puff += _row[20]
+            if _row[1] != case_number:
+                uses[case_number] = ([dyevert_not_used_inj, dyevert_used_inj, dyevert_not_used_puff, dyevert_used_puff])
+                dyevert_used_inj = 0
+                dyevert_not_used_inj = 0
+                dyevert_used_puff = 0
+                dyevert_not_used_puff = 0
+                vol_used_inj = 0
+                vol_not_used_inj = 0
+                vol_used_puff = 0
+                vol_not_used_puff = 0
+                case_number = _row[1]
+            if _row[1] == case_number:
+                if _row[20] + _row[17] >= 3:
+                    puff_inj = 1
+                elif _row[20] + _row[17] <= 2:
+                    puff_inj = 2
+                elif _row[28] >= 2.5:
+                    puff_inj = 1
+                elif _row[28] <= 2:
+                    puff_inj = 2
+                if round(_row[28], 2) != 0 and round(_row[20], 2) != 0:
+                    if _row[5] == 1 and _row[18] == 0 and puff_inj == 1:
+                        dyevert_not_used_inj += 1
+                        vol_not_used_inj += _row[20]
+                    elif _row[5] == 1 and puff_inj == 1:
+                        dyevert_used_inj += 1
+                        vol_used_inj += _row[20]
+                    elif _row[5] == 1 and _row[18] == 0 and puff_inj == 2:
+                        dyevert_not_used_puff += 1
+                        vol_not_used_puff += _row[20]
+                    elif _row[5] == 1 and puff_inj == 2:
+                        dyevert_used_puff += 1
+                        vol_used_puff += _row[20]
 
-        return [dyevert_not_used_inj, dyevert_used_inj, dyevert_not_used_puff, dyevert_used_puff]
+        uses[case_number] = ([dyevert_not_used_inj, dyevert_used_inj, dyevert_not_used_puff, dyevert_used_puff])
+
+        return uses
 
 
 def excel_write(file_names, cmsw):
-
+    """Writes data into the two Excel Sheets as seen in the example
+    Takes two inputs:
+        -the file names of the CMSW databases
+        -the serial numbers of the CMSWs
+    Generates two files:
+        -The summary table, which as an augmented sales table
+        -The in depth table, which details every injection from the databases
+    """
     cases = list_builder(file_names)
     xlsx1_name = str(cmsw).replace('s', '') + 'rods-case-data.xlsx'
     wb = openpyxl.load_workbook('Rods-Template.xlsx')
