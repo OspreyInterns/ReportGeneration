@@ -3,6 +3,54 @@ import sqlite3 as sqlite
 import openpyxl
 from openpyxl.styles import Alignment, Font, PatternFill
 
+# case column numbers
+CMSW_CASE_ID = 0
+CASE_ID = 1
+SERIAL_NUMBER = 3
+DATE_OF_PROCEDURE = 5
+THRESHOLD_VOLUME = 8
+ATTEMPTED_CONTRAST_INJECTION_VOLUME = 13
+DIVERTED_CONTRAST_VOLUME = 14
+CUMULATIVE_VOLUME_TO_PATIENT = 15
+PERCENTAGE_CONTRAST_DIVERTED = 16
+TOTAL_DURATION = 19
+
+#  injection column numbers
+TIME_STAMP = 2
+SYRINGE_REVISION = 3
+PMDV_REVISION = 4
+IS_AN_INJECTION = 5
+IS_ASPIRATING_CONTRAST = 6
+DYEVERT_DIAMETER = 7
+SYRINGE_DIAMETER = 8
+STARTING_SYRINGE_POSITION = 9
+ENDING_SYRINGE_POSITION = 10
+LINEAR_SYRINGE_MOVEMENT = 11
+SYRINGE_VOLUME_INJECTED_OR_ASPIRATED = 12
+STARTING_DYEVERT_POSITION = 13
+ENDING_DYEVERT_POSITION = 14
+LINEAR_DYEVERT_MOVEMENT = 15
+DIVERT_VOLUME_DIVERTED = 16
+DYEVERT_CONTRAST_VOLUME_DIVERTED = 17
+PERCENT_CONTRAST_SAVED = 18
+INJECTION_VOLUME_TO_PATIENT = 19
+CONTRAST_VOLUME_TO_PATIENT = 20
+CUMULATIVE_CONTRAST_VOLUME_TO_PATIENT = 21
+OTHER_VOLUME_TO_PATIENT = 22
+STARTING_CONTRAST_PERCENT_IN_SYRINGE = 24
+STARTING_CONTRAST_PERCENT_IN_DYEVERT = 25
+ENDING_CONTRAST_PERCENT_IN_DYEVERT = 26
+DURATION = 27
+FLOW_RATE_TO_FROM_SYRINGE = 28
+FLOW_RATE_TO_PATIENT = 29
+PREDOMINANT_CONTRAST_LINE_PRESSURE = 30
+STARTING_DYEVERT_STOPCOCK_POSITION = 31
+IS_SYSTEM_PAUSED = 32
+ENDING_CONTRAST_PERCENT_IN_SYRINGE = 33
+SYRINGE_ADDRESS = 34
+PMDV_ADDRESS = 35
+IS_DEVICE_REPLACEMENT = 36
+
 # Write data for sales team to appropriate template
 
 
@@ -31,7 +79,7 @@ def injection_table(file_names):
 
             for row in rows:
 
-                case_id_number[row[0]] = row[1][-23:-4]
+                case_id_number[row[CMSW_CASE_ID]] = row[CASE_ID][-23:-4]
 
         with con:
 
@@ -41,37 +89,48 @@ def injection_table(file_names):
 
             for row in rows:
                 puff_inj = ''
-                if case_number != row[1]:
-                    case_number = row[1]
+                if case_number != row[CASE_ID]:
+                    case_number = row[CASE_ID]
                     _cmsw = str(file_name[-23:-20]).replace('/', '')
                     cases.append(['CMSW', '', '', '', '', int(_cmsw)])
                     cases.append(['Case', '', '', '', '', case_id_number[case_number]])
-                if row[5] == 1:
+                if row[IS_AN_INJECTION] == 1:
                     inj_asp = 'INJ'
                 else:
                     inj_asp = 'ASP'
-                if row[6] == 1:
+                if row[IS_ASPIRATING_CONTRAST] == 1:
                     contrast_asp = 'Yes'
                 else:
                     contrast_asp = ''
-                if row[36] == 1:
+                if row[IS_DEVICE_REPLACEMENT] == 1:
                     replacement = 'Yes'
                 else:
                     replacement = ''
                 if inj_asp == 'INJ':
-                    if row[20]+row[17] >= 3:
+                    if row[CONTRAST_VOLUME_TO_PATIENT]+row[DYEVERT_CONTRAST_VOLUME_DIVERTED] >= 3:
                         puff_inj = 'Injection'
-                    elif row[20]+row[17] <= 2:
+                    elif row[CONTRAST_VOLUME_TO_PATIENT]+row[DYEVERT_CONTRAST_VOLUME_DIVERTED] <= 2:
                         puff_inj = 'Puff'
-                    elif row[28] >= 2.5:
+                    elif row[FLOW_RATE_TO_FROM_SYRINGE] >= 2.5:
                         puff_inj = 'Injection'
-                    elif row[28] <= 2:
+                    elif row[FLOW_RATE_TO_FROM_SYRINGE] <= 2:
                         puff_inj = 'Puff'
-                cases.append([row[2], row[3], row[4], row[34], row[35], inj_asp, contrast_asp, replacement, row[7],
-                              row[8], row[9], row[10], row[11], row[12], row[13], row[14], row[15], row[16],
-                              round(row[17], 2), row[18], row[19], round(row[20], 2), round(row[21], 2), row[22],
-                              row[24], row[33], row[25], row[26], row[27], round(row[28], 2), round(row[29], 2),
-                              row[30], row[31], row[32], '', round(row[20]+row[17], 2), puff_inj])
+                cases.append([row[TIME_STAMP], row[SYRINGE_REVISION], row[PMDV_REVISION], row[SYRINGE_ADDRESS],
+                              row[PMDV_ADDRESS], inj_asp, contrast_asp, replacement, row[DYEVERT_DIAMETER],
+                              row[SYRINGE_DIAMETER], row[STARTING_SYRINGE_POSITION], row[ENDING_SYRINGE_POSITION],
+                              row[LINEAR_SYRINGE_MOVEMENT], row[SYRINGE_VOLUME_INJECTED_OR_ASPIRATED],
+                              row[STARTING_DYEVERT_POSITION], row[ENDING_DYEVERT_POSITION],
+                              row[LINEAR_DYEVERT_MOVEMENT], row[DIVERT_VOLUME_DIVERTED],
+                              round(row[DYEVERT_CONTRAST_VOLUME_DIVERTED], 2), row[PERCENT_CONTRAST_SAVED],
+                              row[INJECTION_VOLUME_TO_PATIENT], round(row[CONTRAST_VOLUME_TO_PATIENT], 2),
+                              round(row[CUMULATIVE_CONTRAST_VOLUME_TO_PATIENT], 2), row[OTHER_VOLUME_TO_PATIENT],
+                              row[STARTING_CONTRAST_PERCENT_IN_SYRINGE], row[ENDING_CONTRAST_PERCENT_IN_SYRINGE],
+                              row[STARTING_CONTRAST_PERCENT_IN_DYEVERT], row[ENDING_CONTRAST_PERCENT_IN_DYEVERT],
+                              row[DURATION], round(row[FLOW_RATE_TO_FROM_SYRINGE], 2),
+                              round(row[FLOW_RATE_TO_PATIENT], 2), row[PREDOMINANT_CONTRAST_LINE_PRESSURE],
+                              row[STARTING_DYEVERT_STOPCOCK_POSITION], row[IS_SYSTEM_PAUSED], '',
+                              round(row[CONTRAST_VOLUME_TO_PATIENT]+row[DYEVERT_CONTRAST_VOLUME_DIVERTED], 2),
+                              puff_inj])
 
     return cases
 
@@ -91,19 +150,30 @@ def list_builder(file_names):
 
             for row in rows:
                 uses = dyevert_uses(file_name)
-                if not(row[19] <= 5) and not(row[13] == row[14] == row[15] == 0 and row[16] <= 1):
-                    if row[15] <= row[8] / 3 <= row[13]:
+                if not(row[TOTAL_DURATION] <= 5) and not(row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]
+                                                         == row[DIVERTED_CONTRAST_VOLUME]
+                                                         == row[LINEAR_DYEVERT_MOVEMENT] == 0
+                                                         and row[DIVERT_VOLUME_DIVERTED] <= 1):
+                    if row[CUMULATIVE_VOLUME_TO_PATIENT] <= row[THRESHOLD_VOLUME] \
+                            / 3 <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
                         color = 1
-                    elif row[15] <= row[8] * 2 / 3 <= row[13]:
+                    elif row[CUMULATIVE_VOLUME_TO_PATIENT] <= row[THRESHOLD_VOLUME] \
+                            * 2 / 3 <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
                         color = 2
-                    elif row[15] <= row[8] <= row[13]:
+                    elif row[CUMULATIVE_VOLUME_TO_PATIENT] <= row[THRESHOLD_VOLUME] \
+                            <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
                         color = 3
-                    elif row[15] >= row[8] <= row[13]:
+                    elif row[CUMULATIVE_VOLUME_TO_PATIENT] >= row[THRESHOLD_VOLUME] \
+                            <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
                         color = 4
                     else:
                         color = 0
-                    cases.append((color, row[5][0:10], row[5][11:22], row[8], row[13], row[15], row[14], row[16],
-                                  uses[row[0]][1], uses[row[0]][3], uses[row[0]][0], uses[row[0]][2], int(row[3])))
+                    cases.append((color, row[DATE_OF_PROCEDURE][0:10], row[DATE_OF_PROCEDURE][11:22],
+                                  row[THRESHOLD_VOLUME], row[ATTEMPTED_CONTRAST_INJECTION_VOLUME],
+                                  row[CUMULATIVE_VOLUME_TO_PATIENT], row[DIVERTED_CONTRAST_VOLUME],
+                                  row[PERCENTAGE_CONTRAST_DIVERTED], uses[row[CMSW_CASE_ID]][1],
+                                  uses[row[CMSW_CASE_ID]][3], uses[row[CMSW_CASE_ID]][0],
+                                  uses[row[CMSW_CASE_ID]][2], int(row[SERIAL_NUMBER])))
     cases.sort(key=sort_criteria)
 
     return cases
@@ -114,7 +184,7 @@ def dyevert_uses(file_name):
     and the number of times contrast was injected both in puffs and injections
     Volume data is currently unused
     """
-    _con = sqlite.connect(file_name)
+    con = sqlite.connect(file_name)
     dyevert_used_inj = 0
     dyevert_not_used_inj = 0
     dyevert_used_puff = 0
@@ -126,16 +196,16 @@ def dyevert_uses(file_name):
     case_number = 0
     uses = []
 
-    with _con:
+    with con:
 
-        _cur = _con.cursor()
-        _cur.execute('SELECT * FROM CMSWInjections')
-        _rows = _cur.fetchall()
+        cur = con.cursor()
+        cur.execute('SELECT * FROM CMSWInjections')
+        rows = cur.fetchall()
 
-        for iter in range(_rows[-1][1]+1):
+        for ph in range(rows[-1][1]+1):
             uses.append([0, 0, 0, 0])
-        for _row in _rows:
-            if _row[1] != case_number:
+        for row in rows:
+            if row[CASE_ID] != case_number:
                 uses[case_number] = ([dyevert_not_used_inj, dyevert_used_inj, dyevert_not_used_puff, dyevert_used_puff])
                 dyevert_used_inj = 0
                 dyevert_not_used_inj = 0
@@ -145,29 +215,29 @@ def dyevert_uses(file_name):
                 vol_not_used_inj = 0
                 vol_used_puff = 0
                 vol_not_used_puff = 0
-                case_number = _row[1]
-            if _row[1] == case_number:
-                if _row[20] + _row[17] >= 3:
+                case_number = row[1]
+            if row[CASE_ID] == case_number:
+                if row[CONTRAST_VOLUME_TO_PATIENT] + row[DYEVERT_CONTRAST_VOLUME_DIVERTED] >= 3:
                     puff_inj = 1
-                elif _row[20] + _row[17] <= 2:
+                elif row[CONTRAST_VOLUME_TO_PATIENT] + row[DYEVERT_CONTRAST_VOLUME_DIVERTED] <= 2:
                     puff_inj = 2
-                elif _row[28] >= 2.5:
+                elif row[FLOW_RATE_TO_FROM_SYRINGE] >= 2.5:
                     puff_inj = 1
-                elif _row[28] <= 2:
+                elif row[FLOW_RATE_TO_FROM_SYRINGE] <= 2:
                     puff_inj = 2
-                if round(_row[28], 2) != 0 and round(_row[20], 2) != 0:
-                    if _row[5] == 1 and _row[18] == 0 and puff_inj == 1:
+                if round(row[FLOW_RATE_TO_FROM_SYRINGE], 2) != 0 and round(row[FLOW_RATE_TO_PATIENT], 2) != 0:
+                    if row[IS_AN_INJECTION] == 1 and row[PERCENT_CONTRAST_SAVED] == 0 and puff_inj == 1:
                         dyevert_not_used_inj += 1
-                        vol_not_used_inj += _row[20]
-                    elif _row[5] == 1 and puff_inj == 1:
+                        vol_not_used_inj += row[CONTRAST_VOLUME_TO_PATIENT]
+                    elif row[IS_AN_INJECTION] == 1 and puff_inj == 1:
                         dyevert_used_inj += 1
-                        vol_used_inj += _row[20]
-                    elif _row[5] == 1 and _row[18] == 0 and puff_inj == 2:
+                        vol_used_inj += row[CONTRAST_VOLUME_TO_PATIENT]
+                    elif row[IS_AN_INJECTION] == 1 and row[PERCENT_CONTRAST_SAVED] == 0 and puff_inj == 2:
                         dyevert_not_used_puff += 1
-                        vol_not_used_puff += _row[20]
-                    elif _row[5] == 1 and puff_inj == 2:
+                        vol_not_used_puff += row[CONTRAST_VOLUME_TO_PATIENT]
+                    elif row[IS_AN_INJECTION] == 1 and puff_inj == 2:
                         dyevert_used_puff += 1
-                        vol_used_puff += _row[20]
+                        vol_used_puff += row[CONTRAST_VOLUME_TO_PATIENT]
 
         uses[case_number] = ([dyevert_not_used_inj, dyevert_used_inj, dyevert_not_used_puff, dyevert_used_puff])
 

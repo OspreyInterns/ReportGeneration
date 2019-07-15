@@ -3,6 +3,26 @@ import sqlite3 as sqlite
 import openpyxl
 from openpyxl.styles import Alignment, PatternFill
 
+# case column numbers
+CMSW_CASE_ID = 0
+CASE_ID = 1
+DATE_OF_PROCEDURE = 5
+THRESHOLD_VOLUME = 8
+ATTEMPTED_CONTRAST_INJECTION_VOLUME = 13
+DIVERTED_CONTRAST_VOLUME = 14
+CUMULATIVE_VOLUME_TO_PATIENT = 15
+PERCENTAGE_CONTRAST_DIVERTED = 16
+TOTAL_DURATION = 19
+END_TIME = 20
+
+#  injection column numbers
+IS_AN_INJECTION = 5
+LINEAR_DYEVERT_MOVEMENT = 15
+DYEVERT_CONTRAST_VOLUME_DIVERTED = 17
+PERCENT_CONTRAST_SAVED = 18
+CONTRAST_VOLUME_TO_PATIENT = 20
+PREDOMINANT_CONTRAST_LINE_PRESSURE = 30
+
 # Reads from the injection table to sum up the injections
 
 
@@ -18,13 +38,15 @@ def straight_to_patient(file_name):
 
         rows = cur.fetchall()
 
-        for n in range(len(rows)):
+        for placeholder in range(len(rows)):
             contrast_inj.append([0, 0])
         for row in rows:
-            if row[5] == 1 and (row[18] <= 1 or row[15] <= 20) and row[30] == 0:
-                contrast_inj[row[1]-1][0] += row[20]
-            if row[5] == 1 and (row[17] == 0 or row[15] <= 20):
-                contrast_inj[row[1]-1][1] += row[20]
+            if row[IS_AN_INJECTION] == 1 and (row[PERCENT_CONTRAST_SAVED] <= 1 or row[LINEAR_DYEVERT_MOVEMENT] <= 20)\
+                    and row[PREDOMINANT_CONTRAST_LINE_PRESSURE] == 0:
+                contrast_inj[row[CASE_ID]-1][0] += row[CONTRAST_VOLUME_TO_PATIENT]
+            if row[IS_AN_INJECTION] == 1 and (row[DYEVERT_CONTRAST_VOLUME_DIVERTED] == 0
+                                              or row[LINEAR_DYEVERT_MOVEMENT] <= 20):
+                contrast_inj[row[CASE_ID]-1][1] += row[CONTRAST_VOLUME_TO_PATIENT]
 
         return contrast_inj
 
@@ -41,7 +63,8 @@ def would_be_saved(file_name):
         case_info = []
 
         for row in rows:
-            case_info.append([row[0], row[13], row[8], row[15]])
+            case_info.append([row[CMSW_CASE_ID], row[ATTEMPTED_CONTRAST_INJECTION_VOLUME],
+                              row[THRESHOLD_VOLUME], row[LINEAR_DYEVERT_MOVEMENT]])
 
     what_if = []
     direct_injected = straight_to_patient(file_name)
@@ -81,18 +104,24 @@ def list_builder(file_names):
             to_patient = straight_to_patient(file_name)
 
             for row in rows:
-                if row[8] == 0:
+                if row[THRESHOLD_VOLUME] == 0:
                     perc_threshold = 'N/A'
                 else:
-                    perc_threshold = row[15] / row[8] * 100
+                    perc_threshold = row[CUMULATIVE_VOLUME_TO_PATIENT] / row[THRESHOLD_VOLUME] * 100
                 if row[2] == '2.1.24':
-                    cases.append(('', '', '', row[5][0:10], row[1][-12:-4], '', row[19], row[8], row[13],
-                                 row[14], row[15], row[16], perc_threshold, '', to_patient[row[0]-1][0], '', '',
-                                 what_if[row[0] - 1][0], what_if[row[0] - 1][1]))
+                    cases.append(('', '', '', row[DATE_OF_PROCEDURE][0:10], row[CASE_ID][-12:-4], '',
+                                 row[TOTAL_DURATION], row[THRESHOLD_VOLUME], row[ATTEMPTED_CONTRAST_INJECTION_VOLUME],
+                                 row[DIVERTED_CONTRAST_VOLUME], row[CUMULATIVE_VOLUME_TO_PATIENT],
+                                 row[PERCENTAGE_CONTRAST_DIVERTED], perc_threshold,
+                                  '', to_patient[row[CMSW_CASE_ID]-1][0], '', '',
+                                 what_if[row[CMSW_CASE_ID] - 1][0], what_if[row[CMSW_CASE_ID] - 1][1]))
                 else:
-                    cases.append(('', '', '', row[5][0:10], row[1][-12:-4], row[20][-8:], row[19], row[8], row[13],
-                                 row[14], row[15], row[16], perc_threshold, '', to_patient[row[0]-1][0], '', '',
-                                 what_if[row[0] - 1][0], what_if[row[0] - 1][1]))
+                    cases.append(('', '', '', row[DATE_OF_PROCEDURE][0:10], row[CASE_ID][-12:-4],
+                                 row[END_TIME][-8:], row[TOTAL_DURATION], row[THRESHOLD_VOLUME],
+                                 row[ATTEMPTED_CONTRAST_INJECTION_VOLUME], row[DIVERTED_CONTRAST_VOLUME],
+                                 row[CUMULATIVE_VOLUME_TO_PATIENT], row[PERCENTAGE_CONTRAST_DIVERTED], perc_threshold,
+                                  '', to_patient[row[CMSW_CASE_ID]-1][0], '', '',
+                                 what_if[row[CMSW_CASE_ID] - 1][0], what_if[row[CMSW_CASE_ID] - 1][1]))
 
     return cases
 

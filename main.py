@@ -5,6 +5,7 @@ import tkinter as tk
 import DyeMinish_data
 import sales_data
 import rods_rockin_data
+import cmsw_read
 
 # Main Method of project, creates UI and takes input to pass to functions
 
@@ -59,7 +60,7 @@ class Application(tk.Frame):
         cmsws = []
 
         for file in file_names:
-            cmsws.append(str(file[-23:-20]))
+            cmsws.append(str(cmsw_read.cmsw_id_read(file)))
 
         number = 0
 
@@ -82,7 +83,7 @@ class Application(tk.Frame):
                                                  filetypes=(('sqlite files', '*.sqlite'), ('all files', '*.*')))
         file_names = list(file_names)
         for file in file_names:
-            cmsws.append(file[-23:-20])
+            cmsws.append(str(cmsw_read.cmsw_id_read(file)))
         for cmsw in cmsws:
             cmsw = cmsw.replace('/', '')
             cmsws[number] = cmsw
@@ -99,7 +100,7 @@ class Application(tk.Frame):
                                                  filetypes=(('sqlite files', '*.sqlite'), ('all files', '*.*')))
         file_names = list(file_names)
         for file in file_names:
-            cmsws.append(file[-23:-20])
+            cmsws.append(str(cmsw_read.cmsw_id_read(file)))
         for cmsw in cmsws:
             cmsw = cmsw.replace('/', '')
             cmsws[number] = cmsw
@@ -115,7 +116,7 @@ class Application(tk.Frame):
                                                  filetypes=(('sqlite files', '*.sqlite'), ('all files', '*.*')))
         file_names = list(file_names)
         for file in file_names:
-            cmsws.append(file[-23:-20])
+            cmsws.append(str(cmsw_read.cmsw_id_read(file)))
         for cmsw in cmsws:
             cmsw = cmsw.replace('/', '')
             cmsws[number] = cmsw

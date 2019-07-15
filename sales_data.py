@@ -7,6 +7,15 @@ from pptx.chart.data import CategoryChartData
 from pptx.enum.text import PP_ALIGN
 from pptx.util import Pt
 
+# case column numbers
+DATE_OF_PROCEDURE = 5
+THRESHOLD_VOLUME = 8
+ATTEMPTED_CONTRAST_INJECTION_VOLUME = 13
+DIVERTED_CONTRAST_VOLUME = 14
+CUMULATIVE_VOLUME_TO_PATIENT = 15
+PERCENTAGE_CONTRAST_DIVERTED = 16
+TOTAL_DURATION = 19
+
 # Write data for sales team to appropriate templates for power point and
 
 
@@ -29,20 +38,26 @@ def list_builder(file_names):
             rows = cur.fetchall()
 
             for row in rows:
-                if row[19] <= 5 or row[13] == row[14] == row[15] == row[16] == 0:  #
-                    pass
-                else:
-                    if row[15] <= row[8] / 3 <= row[13]:
+                if not(row[19] <= 5 or row[ATTEMPTED_CONTRAST_INJECTION_VOLUME] == row[DIVERTED_CONTRAST_VOLUME]
+                       == row[CUMULATIVE_VOLUME_TO_PATIENT] == row[PERCENTAGE_CONTRAST_DIVERTED] == 0):
+                    if row[CUMULATIVE_VOLUME_TO_PATIENT] <= row[THRESHOLD_VOLUME] \
+                            / 3 <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
                         color = 1
-                    elif row[15] <= row[8] * 2/3 <= row[13]:
+                    elif row[CUMULATIVE_VOLUME_TO_PATIENT] <= row[THRESHOLD_VOLUME] \
+                            * 2/3 <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
                         color = 2
-                    elif row[15] <= row[8] <= row[13]:
+                    elif row[CUMULATIVE_VOLUME_TO_PATIENT] <= row[THRESHOLD_VOLUME] \
+                            <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
                         color = 3
-                    elif row[15] >= row[8] <= row[13]:
+                    elif row[CUMULATIVE_VOLUME_TO_PATIENT] >= row[THRESHOLD_VOLUME] \
+                            <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
                         color = 4
                     else:
                         color = 0
-                    cases.append((color, row[5][0:10], row[5][11:22], row[8], row[13], row[15], row[14], row[16]))
+                    cases.append((color, row[DATE_OF_PROCEDURE][0:10], row[DATE_OF_PROCEDURE][11:22],
+                                  row[THRESHOLD_VOLUME], row[ATTEMPTED_CONTRAST_INJECTION_VOLUME],
+                                  row[CUMULATIVE_VOLUME_TO_PATIENT], row[DIVERTED_CONTRAST_VOLUME],
+                                  row[PERCENTAGE_CONTRAST_DIVERTED]))
     cases.sort(key=sort_criteria)
     return cases
 
