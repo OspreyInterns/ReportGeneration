@@ -7,6 +7,7 @@ from openpyxl.styles import Alignment, PatternFill
 CMSW_CASE_ID = 0
 CASE_ID = 1
 DATE_OF_PROCEDURE = 5
+DYEVERT_USED = 6
 THRESHOLD_VOLUME = 8
 ATTEMPTED_CONTRAST_INJECTION_VOLUME = 13
 DIVERTED_CONTRAST_VOLUME = 14
@@ -106,6 +107,7 @@ def list_builder(file_names):
             to_patient = straight_to_patient(file_name)
 
             for row in rows:
+                pmdv = row[DYEVERT_USED]
                 if row[THRESHOLD_VOLUME] == 0:
                     perc_threshold = 'N/A'
                 else:
@@ -116,14 +118,14 @@ def list_builder(file_names):
                                  row[DIVERTED_CONTRAST_VOLUME], row[CUMULATIVE_VOLUME_TO_PATIENT],
                                  row[PERCENTAGE_CONTRAST_DIVERTED], perc_threshold,
                                   '', to_patient[row[CMSW_CASE_ID]-1][0], '', '',
-                                 what_if[row[CMSW_CASE_ID] - 1][0], what_if[row[CMSW_CASE_ID] - 1][1]))
+                                 what_if[row[CMSW_CASE_ID] - 1][0], what_if[row[CMSW_CASE_ID] - 1][1], pmdv))
                 else:
                     cases.append(('', '', '', row[DATE_OF_PROCEDURE][0:10], row[CASE_ID][-12:-4],
                                  row[END_TIME][-8:], row[TOTAL_DURATION], row[THRESHOLD_VOLUME],
                                  row[ATTEMPTED_CONTRAST_INJECTION_VOLUME], row[DIVERTED_CONTRAST_VOLUME],
                                  row[CUMULATIVE_VOLUME_TO_PATIENT], row[PERCENTAGE_CONTRAST_DIVERTED], perc_threshold,
                                   '', to_patient[row[CMSW_CASE_ID]-1][0], '', '',
-                                 what_if[row[CMSW_CASE_ID] - 1][0], what_if[row[CMSW_CASE_ID] - 1][1]))
+                                 what_if[row[CMSW_CASE_ID] - 1][0], what_if[row[CMSW_CASE_ID] - 1][1], pmdv))
 
     return cases
 
@@ -144,19 +146,30 @@ def excel_flag_write(file_names, cmsws):
     data_sheet.title = 'Sheet1'
 
     for row in range(len(cases)):
-        for col in range(len(cases[row])):
-            if float(cases[row][6]) <= 5.:
+        for col in range(len(cases[row])-1):
+            if cases[row][19] == 0:
                 data_sheet.cell(row=row + 2, column=col + 1, value=cases[row][col]).fill = PatternFill(
                     fill_type='solid', start_color=YELLOW, end_color=YELLOW)
-                data_sheet.cell(row=row + 2, column=16, value='Case less than 5 Minutes')
+            elif float(cases[row][6]) <= 5.:
+                data_sheet.cell(row=row + 2, column=col + 1, value=cases[row][col]).fill = PatternFill(
+                    fill_type='solid', start_color=YELLOW, end_color=YELLOW)
             elif cases[row][8] == 0 and cases[row][9] == 0 and cases[row][10] == 0 \
                     and cases[row][11] == 0:
                 data_sheet.cell(row=row + 2, column=col + 1, value=cases[row][col]).fill = PatternFill(
                     fill_type='solid', start_color=YELLOW, end_color=YELLOW)
-                data_sheet.cell(row=row + 2, column=16, value='No contrast injected')
             else:
                 data_sheet.cell(row=row + 2, column=col + 1, value=cases[row][col])
             data_sheet.cell(row=row + 2, column=col + 1).alignment = Alignment(wrapText=True)
+        if cases[row][19] == 0:
+            data_sheet.cell(row=row + 2, column=16, value='DyeTect Case')
+            data_sheet.cell(row=row + 2, column=14, value='No')
+        elif float(cases[row][6]) <= 5.:
+            data_sheet.cell(row=row + 2, column=16, value='Case less than 5 Minutes')
+            data_sheet.cell(row=row + 2, column=14, value='No')
+        elif cases[row][8] == 0 and cases[row][9] == 0 and cases[row][10] == 0 \
+                and cases[row][11] == 0:
+            data_sheet.cell(row=row + 2, column=16, value='No contrast was injected')
+            data_sheet.cell(row=row + 2, column=14, value='No')
 
     wb.save(xlsx_name)
 
@@ -172,7 +185,7 @@ def excel_destructive_write(file_names, cmsws):
     cases = list_builder(file_names)
     remove_cases = []
     for case in cases:
-        if case[6] <= 5. or int(case[8]) == int(case[9]) == int(case[10]) == int(case[11]) == 0:
+        if case[6] <= 5. or int(case[8]) == int(case[9]) == int(case[10]) == int(case[11]) == 0 or case[19] == 0:
             remove_cases.append(case)
 
     for case in remove_cases:
