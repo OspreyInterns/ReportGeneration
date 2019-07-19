@@ -51,10 +51,17 @@ SYRINGE_ADDRESS = 34
 PMDV_ADDRESS = 35
 IS_DEVICE_REPLACEMENT = 36
 
+# colors
+WHITE = 0
+LTGRN = 1
+GREEN = 2
+YELLOW = 3
+RED = 4
+
 # Write data for sales team to appropriate template
 
 
-def sort_criteria(case):
+def _sort_criteria(case):
     """reads info for a sort"""
     return case[1], case[2]
 
@@ -156,25 +163,25 @@ def list_builder(file_names):
                                                          and row[DIVERT_VOLUME_DIVERTED] <= 1):
                     if row[CUMULATIVE_VOLUME_TO_PATIENT] <= row[THRESHOLD_VOLUME] \
                             / 3 <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
-                        color = 1
+                        color = LTGRN
                     elif row[CUMULATIVE_VOLUME_TO_PATIENT] <= row[THRESHOLD_VOLUME] \
                             * 2 / 3 <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
-                        color = 2
+                        color = GREEN
                     elif row[CUMULATIVE_VOLUME_TO_PATIENT] <= row[THRESHOLD_VOLUME] \
                             <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
-                        color = 3
+                        color = YELLOW
                     elif row[CUMULATIVE_VOLUME_TO_PATIENT] >= row[THRESHOLD_VOLUME] \
                             <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
-                        color = 4
+                        color = RED
                     else:
-                        color = 0
+                        color = WHITE
                     cases.append((color, row[DATE_OF_PROCEDURE][0:10], row[DATE_OF_PROCEDURE][11:22],
                                   row[THRESHOLD_VOLUME], row[ATTEMPTED_CONTRAST_INJECTION_VOLUME],
                                   row[CUMULATIVE_VOLUME_TO_PATIENT], row[DIVERTED_CONTRAST_VOLUME],
                                   row[PERCENTAGE_CONTRAST_DIVERTED], uses[row[CMSW_CASE_ID]][1],
                                   uses[row[CMSW_CASE_ID]][3], uses[row[CMSW_CASE_ID]][0],
                                   uses[row[CMSW_CASE_ID]][2], int(row[SERIAL_NUMBER])))
-    cases.sort(key=sort_criteria)
+    cases.sort(key=_sort_criteria)
 
     return cases
 
@@ -254,7 +261,7 @@ def excel_write(file_names, cmsw):
         -The in depth table, which details every injection from the databases
     """
     cases = list_builder(file_names)
-    xlsx1_name = str(cmsw).replace('s', '') + 'rods-case-data.xlsx'
+    xlsx1_name = str(cmsw) + 'rods-case-data.xlsx'
     wb = openpyxl.load_workbook('Rods-Template.xlsx')
     data_sheet = wb.active
     data_sheet.title = 'Sheet1'

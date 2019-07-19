@@ -65,7 +65,6 @@ class Application(tk.Frame):
         number = 0
 
         for cmsw in cmsws:
-            cmsw = cmsw.replace('/', '')
             cmsws[number] = cmsw
             number += 1
         if not self.delete.get():

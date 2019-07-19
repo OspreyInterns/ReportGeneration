@@ -23,6 +23,8 @@ PERCENT_CONTRAST_SAVED = 18
 CONTRAST_VOLUME_TO_PATIENT = 20
 PREDOMINANT_CONTRAST_LINE_PRESSURE = 30
 
+# Highlight color
+YELLOW = 'FFFF00'
 # Reads from the injection table to sum up the injections
 
 
@@ -145,12 +147,12 @@ def excel_flag_write(file_names, cmsws):
         for col in range(len(cases[row])):
             if float(cases[row][6]) <= 5.:
                 data_sheet.cell(row=row + 2, column=col + 1, value=cases[row][col]).fill = PatternFill(
-                    fill_type="solid", start_color='FFFF00', end_color='FFFF00')
+                    fill_type='solid', start_color=YELLOW, end_color=YELLOW)
                 data_sheet.cell(row=row + 2, column=16, value='Case less than 5 Minutes')
             elif cases[row][8] == 0 and cases[row][9] == 0 and cases[row][10] == 0 \
                     and cases[row][11] == 0:
                 data_sheet.cell(row=row + 2, column=col + 1, value=cases[row][col]).fill = PatternFill(
-                    fill_type="solid", start_color='FFFF00', end_color='FFFF00')
+                    fill_type='solid', start_color=YELLOW, end_color=YELLOW)
                 data_sheet.cell(row=row + 2, column=16, value='No contrast injected')
             else:
                 data_sheet.cell(row=row + 2, column=col + 1, value=cases[row][col])
