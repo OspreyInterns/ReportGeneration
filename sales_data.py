@@ -45,7 +45,7 @@ def list_builder(file_names):
             rows = cur.fetchall()
 
             for row in rows:
-                if not(row[19] <= 5 or row[ATTEMPTED_CONTRAST_INJECTION_VOLUME] == row[DIVERTED_CONTRAST_VOLUME]
+                if not(row[TOTAL_DURATION] <= 5 or row[ATTEMPTED_CONTRAST_INJECTION_VOLUME] == row[DIVERTED_CONTRAST_VOLUME]
                        == row[CUMULATIVE_VOLUME_TO_PATIENT] == row[PERCENTAGE_CONTRAST_DIVERTED] == 0):
                     if row[CUMULATIVE_VOLUME_TO_PATIENT] <= row[THRESHOLD_VOLUME] \
                             / 3 <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
@@ -98,13 +98,13 @@ def write(file_names, cmsw):
     diverted = 0
 
     for case in cases:
-        if case[0] == 4:
+        if case[0] == RED:
             colors[0] += 1
-        elif case[0] == 3:
+        elif case[0] == YELLOW:
             colors[1] += 1
-        elif case[0] == 2:
+        elif case[0] == GREEN:
             colors[2] += 1
-        elif case[0] == 1:
+        elif case[0] == LTGRN:
             colors[3] += 1
         attempted += case[4]
         diverted += case[6]

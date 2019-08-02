@@ -99,7 +99,7 @@ def injection_table(file_names):
                 if case_number != row[CASE_ID]:
                     case_number = row[CASE_ID]
                     _cmsw = str(file_name[-23:-20]).replace('/', '')
-                    cases.append(['CMSW', '', '', '', '', int(_cmsw)])
+                    cases.append(['CMSW', '', '', '', '', _cmsw])
                     cases.append(['Case', '', '', '', '', case_id_number[case_number]])
                 if row[IS_AN_INJECTION] == 1:
                     inj_asp = 'INJ'

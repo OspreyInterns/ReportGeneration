@@ -11,7 +11,7 @@ def cmsw_id_read(file_name):
     cmsw = file_name
     p, f = os.path.split(cmsw)
     serial = f.lower().split('_')
-    print(serial)
+    # print(serial)
     return serial[0]
 
 # Testing function

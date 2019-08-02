@@ -84,6 +84,8 @@ def would_be_saved(file_name):
             else:
                 would_be_portion = 0
             what_if.append([would_be_total, would_be_portion])
+        elif case[2] == 0 and vol_att_on == 0:
+            what_if.append([vol_inj_off, 0])
         else:
             what_if.append([vol_inj_off, vol_inj_off/case[2]])
 
@@ -107,7 +109,10 @@ def list_builder(file_names):
             to_patient = straight_to_patient(file_name)
 
             for row in rows:
-                pmdv = row[DYEVERT_USED]
+                if row[DYEVERT_USED] == 1:
+                    pmdv = ''
+                else:
+                    pmdv = 0
                 if row[THRESHOLD_VOLUME] == 0:
                     perc_threshold = 'N/A'
                 else:
@@ -197,7 +202,7 @@ def excel_destructive_write(file_names, cmsws):
     data_sheet.title = 'Sheet1'
 
     for row in range(len(cases)):
-        for col in range(len(cases[row])):
+        for col in range(len(cases[row])-1):
             data_sheet.cell(row=row+2, column=col+1, value=cases[row][col])
             data_sheet.cell(row=row+2, column=col+1).alignment = Alignment(wrapText=True)
 
