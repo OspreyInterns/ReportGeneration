@@ -154,9 +154,9 @@ def list_builder(file_names):
             cur = con.cursor()
             cur.execute('SELECT * FROM CMSWCases')
             rows = cur.fetchall()
+            uses = dyevert_uses(file_name)
 
             for row in rows:
-                uses = dyevert_uses(file_name)
                 if not(row[TOTAL_DURATION] <= 5) and not(row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]
                                                          == row[DIVERTED_CONTRAST_VOLUME]
                                                          == row[LINEAR_DYEVERT_MOVEMENT] == 0
@@ -260,12 +260,13 @@ def excel_write(file_names, cmsw):
         -The summary table, which as an augmented sales table
         -The in depth table, which details every injection from the databases
     """
+    print('Processing Rod\'s summary data')
     cases = list_builder(file_names)
     xlsx1_name = str(cmsw) + 'rods-case-data.xlsx'
     wb = openpyxl.load_workbook('Rods-Template.xlsx')
     data_sheet = wb.active
     data_sheet.title = 'Sheet1'
-
+    print('Writing summary data')
     for row in range(len(cases)):
         for col in range(len(cases[row])):
             data_sheet.cell(row=row + 17, column=col + 1, value=cases[row][col])
@@ -273,13 +274,13 @@ def excel_write(file_names, cmsw):
 
     data_sheet.column_dimensions['A'].hidden = True
     wb.save(xlsx1_name)
-
+    print('Summary data written, processing injection data')
     injections = injection_table(file_names)
     xlsx2_name = str(cmsw).replace('s', '') + 'rods-detailed-data.xlsx'
     wb = openpyxl.load_workbook('Rods-Other-Template.xlsx')
     data_sheet = wb.active
     data_sheet.title = 'Sheet1'
-
+    print('Writing injection data')
     for row in range(len(injections)):
         for col in range(len(injections[row])):
             if len(injections[row]) >= 10:
@@ -303,3 +304,4 @@ def excel_write(file_names, cmsw):
             data_sheet.cell(row=row + 4, column=col + 1).alignment = Alignment(wrapText=True)
 
     wb.save(xlsx2_name)
+    print('Rod\'s report finished')

@@ -58,15 +58,18 @@ class Application(tk.Frame):
         file_names = filedialog.askopenfilenames(title='Select database file',
                                                  filetypes=(('sqlite files', '*.sqlite'), ('all files', '*.*')))
         cmsws = []
-
+        print('Processing file selection', end='')
         for file in file_names:
             cmsws.append(str(cmsw_read.cmsw_id_read(file)))
+            print('.', end='')
 
         number = 0
 
         for cmsw in cmsws:
             cmsws[number] = cmsw
             number += 1
+        print('')
+        print('Input ready, beginning report...')
         if not self.delete.get():
             DyeMinish_data.excel_flag_write(file_names, cmsws)
         else:
@@ -80,13 +83,17 @@ class Application(tk.Frame):
         number = 0
         file_names = filedialog.askopenfilenames(title='Select database file',
                                                  filetypes=(('sqlite files', '*.sqlite'), ('all files', '*.*')))
+        print('Processing file selection', end='')
         file_names = list(file_names)
         for file in file_names:
             cmsws.append(str(cmsw_read.cmsw_id_read(file)))
+            print('.', end='')
         for cmsw in cmsws:
             cmsw = cmsw.replace('/', '')
             cmsws[number] = cmsw
             number += 1
+        print('')
+        print('Input ready, beginning report...')
         sales_data.write(file_names, cmsws)
         print('Done')
 
@@ -97,13 +104,17 @@ class Application(tk.Frame):
         number = 0
         file_names = filedialog.askopenfilenames(title='Select database file',
                                                  filetypes=(('sqlite files', '*.sqlite'), ('all files', '*.*')))
+        print('Processing file selection', end='')
         file_names = list(file_names)
         for file in file_names:
             cmsws.append(str(cmsw_read.cmsw_id_read(file)))
+            print('.', end='')
         for cmsw in cmsws:
             cmsw = cmsw.replace('/', '')
             cmsws[number] = cmsw
             number += 1
+        print('')
+        print('Input ready, beginning report...')
         rods_rockin_data.excel_write(file_names, cmsws)
         print('Done')
 
@@ -113,13 +124,17 @@ class Application(tk.Frame):
         number = 0
         file_names = filedialog.askopenfilenames(title='Select database file',
                                                  filetypes=(('sqlite files', '*.sqlite'), ('all files', '*.*')))
+        print('Processing file selection', end='')
         file_names = list(file_names)
         for file in file_names:
             cmsws.append(str(cmsw_read.cmsw_id_read(file)))
+            print('.', end='')
         for cmsw in cmsws:
             cmsw = cmsw.replace('/', '')
             cmsws[number] = cmsw
             number += 1
+        print('')
+        print('Input ready, beginning report...')
         rods_rockin_data.excel_write(file_names, cmsws)
         sales_data.write(file_names, cmsws)
         DyeMinish_data.excel_flag_write(file_names, cmsws)

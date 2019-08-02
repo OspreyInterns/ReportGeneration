@@ -70,6 +70,7 @@ def list_builder(file_names):
 
 
 def write(file_names, cmsw):
+    print('Processing data for sales report')
     """Writes data into the an Excel Sheet and a Power Point slide as seen in the example
     Takes two inputs:
         -the file names of the CMSW databases
@@ -83,7 +84,7 @@ def write(file_names, cmsw):
     wb = openpyxl.load_workbook('Sales-Template.xlsx')
     data_sheet = wb.active
     data_sheet.title = 'Sheet1'
-
+    print('Data ready, writing sales report')
     for row in range(len(cases)):
         for col in range(len(cases[row])):
             data_sheet.cell(row=row + 17, column=col + 1, value=cases[row][col])
@@ -96,7 +97,7 @@ def write(file_names, cmsw):
     colors = [0, 0, 0, 0]
     attempted = 0
     diverted = 0
-
+    print('Report written, constructing slide')
     for case in cases:
         if case[0] == RED:
             colors[0] += 1
@@ -130,3 +131,4 @@ def write(file_names, cmsw):
     prs.slides[0].shapes[5].text_frame.paragraphs[0].font.bold = True
     prs.slides[0].shapes[7].text_frame.paragraphs[0].font.italic = True
     prs.save(pptx_name)
+    print('Slides complete')

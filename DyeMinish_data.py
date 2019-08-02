@@ -144,12 +144,12 @@ def excel_flag_write(file_names, cmsws):
         -The flagged table, with data that hits possible removal criteria being highlighted in yellow
     """
     cases = list_builder(file_names)
-
+    print('Processing DyeMinish data with flagging')
     xlsx_name = str(cmsws) + 'DyeMinishFlaggedOutput.xlsx'
     wb = openpyxl.load_workbook('Dyeminish-template.xlsx')
     data_sheet = wb.active
     data_sheet.title = 'Sheet1'
-
+    print('Writing DyeMinish data')
     for row in range(len(cases)):
         for col in range(len(cases[row])-1):
             if cases[row][19] == 0:
@@ -177,6 +177,7 @@ def excel_flag_write(file_names, cmsws):
             data_sheet.cell(row=row + 2, column=14, value='No')
 
     wb.save(xlsx_name)
+    print('DyeMinish report with flagged data finished')
 
 
 def excel_destructive_write(file_names, cmsws):
@@ -187,8 +188,10 @@ def excel_destructive_write(file_names, cmsws):
     Generates one files:
         -The flagged table, with data that hits possible removal criteria being excluded
     """
+    print('Processing DyeMinish data with deletion')
     cases = list_builder(file_names)
     remove_cases = []
+    print('Removing cases')
     for case in cases:
         if case[6] <= 5. or int(case[8]) == int(case[9]) == int(case[10]) == int(case[11]) == 0 or case[19] == 0:
             remove_cases.append(case)
@@ -200,10 +203,11 @@ def excel_destructive_write(file_names, cmsws):
     wb = openpyxl.load_workbook('Dyeminish-template.xlsx')
     data_sheet = wb.active
     data_sheet.title = 'Sheet1'
-
+    print('Writing cleaned DyeMinish data')
     for row in range(len(cases)):
         for col in range(len(cases[row])-1):
             data_sheet.cell(row=row+2, column=col+1, value=cases[row][col])
             data_sheet.cell(row=row+2, column=col+1).alignment = Alignment(wrapText=True)
 
     wb.save(xlsx_name)
+    print('DyeMinish report with deletion finished')
