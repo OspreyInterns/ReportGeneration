@@ -1,7 +1,9 @@
 
 import sqlite3 as sqlite
+import logging
 import openpyxl
 from openpyxl.styles import Alignment, Font, PatternFill
+import cmsw_read
 
 # case column numbers
 CMSW_CASE_ID = 0
@@ -122,6 +124,10 @@ def injection_table(file_names):
                         puff_inj = 'Injection'
                     elif row[FLOW_RATE_TO_FROM_SYRINGE] <= 2:
                         puff_inj = 'Puff'
+                    else:
+                        debug_msg = 'Event ' + str(row[0]) + ' in cmsw ' + str(cmsw_read.cmsw_id_read(file_name)) + \
+                                    ', case ' + str(row[CASE_ID]) + ' matched neither type'
+                        logging.warning(debug_msg)
                 cases.append([row[TIME_STAMP], row[SYRINGE_REVISION], row[PMDV_REVISION], row[SYRINGE_ADDRESS],
                               row[PMDV_ADDRESS], inj_asp, contrast_asp, replacement, row[DYEVERT_DIAMETER],
                               row[SYRINGE_DIAMETER], row[STARTING_SYRINGE_POSITION], row[ENDING_SYRINGE_POSITION],
@@ -280,28 +286,32 @@ def excel_write(file_names, cmsw):
     wb = openpyxl.load_workbook('Rods-Other-Template.xlsx')
     data_sheet = wb.active
     data_sheet.title = 'Sheet1'
-    print('Writing injection data')
+    print('Writing injection data', end='')
     for row in range(len(injections)):
+        if row % 5000 == 0:
+            print('.', end='')
+        if len(injections[row]) >= 10 and injections[row][35] != 0:
+            data_sheet.cell(row=row + 4, column=20).font = Font(bold=True)
+        if (injections[row][5] == 'ASP' and injections[row][6] != 'Yes') or \
+                (injections[row][5] == 'INJ' and (injections[row][28] == 0 or injections[row][21] == 0)):
+            data_sheet.row_dimensions[row + 4].hidden = True
         for col in range(len(injections[row])):
             if len(injections[row]) >= 10:
                 if injections[row][35] == 0:
                     data_sheet.cell(row=row + 4, column=col + 1, value=injections[row][col])
                 elif injections[row][19] == 0:
                     data_sheet.cell(row=row + 4, column=col + 1, value=injections[row][col])
-                    data_sheet.cell(row=row + 4, column=20).font = Font(bold=True)
                     data_sheet.cell(row=row + 4, column=col + 1).fill = PatternFill(
                         fill_type="solid", start_color='FBE798', end_color='FBE798')
                 elif injections[row][19] != 0:
                     data_sheet.cell(row=row + 4, column=col + 1, value=injections[row][col])
-                    data_sheet.cell(row=row + 4, column=20).font = Font(bold=True)
                     data_sheet.cell(row=row + 4, column=col + 1).fill = PatternFill(
                         fill_type="solid", start_color='C5E1B3', end_color='C5E1B3')
-                if (injections[row][5] == 'ASP' and injections[row][6] != 'Yes') or \
-                        (injections[row][5] == 'INJ' and (injections[row][28] == 0 or injections[row][21] == 0)):
-                    data_sheet.row_dimensions[row+4].hidden = True
             else:
                 data_sheet.cell(row=row + 4, column=col + 1, value=injections[row][col])
             data_sheet.cell(row=row + 4, column=col + 1).alignment = Alignment(wrapText=True)
 
+    print('')
+    print('Saving...')
     wb.save(xlsx2_name)
     print('Rod\'s report finished')

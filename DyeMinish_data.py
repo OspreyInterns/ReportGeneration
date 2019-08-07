@@ -1,11 +1,13 @@
 
 import sqlite3 as sqlite
+import logging
 import openpyxl
 from openpyxl.styles import Alignment, PatternFill
 
 # case column numbers
 CMSW_CASE_ID = 0
 CASE_ID = 1
+SERIAL_NUMBER = 3
 DATE_OF_PROCEDURE = 5
 DYEVERT_USED = 6
 THRESHOLD_VOLUME = 8
@@ -67,7 +69,7 @@ def would_be_saved(file_name):
 
         for row in rows:
             case_info.append([row[CMSW_CASE_ID], row[ATTEMPTED_CONTRAST_INJECTION_VOLUME],
-                              row[THRESHOLD_VOLUME], row[LINEAR_DYEVERT_MOVEMENT]])
+                              row[THRESHOLD_VOLUME], row[LINEAR_DYEVERT_MOVEMENT], row[SERIAL_NUMBER]])
 
     what_if = []
     direct_injected = straight_to_patient(file_name)
@@ -82,9 +84,13 @@ def would_be_saved(file_name):
             if case[2] != 0:
                 would_be_portion = (would_be_total / case[2]) * 100
             else:
+                debug_msg = 'CMSW, ' + str(case[4]) + ' case ' + str(case[0]) + ' has zero threshold'
+                logging.warning(debug_msg)
                 would_be_portion = 0
             what_if.append([would_be_total, would_be_portion])
         elif case[2] == 0 and vol_att_on == 0:
+            debug_msg = 'CMSW, ' + str(case[4]) + ' case ' + str(case[0]) + ' has zero threshold'
+            logging.warning(debug_msg)
             what_if.append([vol_inj_off, 0])
         else:
             what_if.append([vol_inj_off, vol_inj_off/case[2]])
@@ -143,8 +149,8 @@ def excel_flag_write(file_names, cmsws):
     Generates one files:
         -The flagged table, with data that hits possible removal criteria being highlighted in yellow
     """
-    cases = list_builder(file_names)
     print('Processing DyeMinish data with flagging')
+    cases = list_builder(file_names)
     xlsx_name = str(cmsws) + 'DyeMinishFlaggedOutput.xlsx'
     wb = openpyxl.load_workbook('Dyeminish-template.xlsx')
     data_sheet = wb.active

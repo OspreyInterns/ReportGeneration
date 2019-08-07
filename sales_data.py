@@ -1,5 +1,6 @@
 
 import sqlite3 as sqlite
+import logging
 import openpyxl
 from openpyxl.styles import Alignment
 from pptx import Presentation
@@ -8,6 +9,8 @@ from pptx.enum.text import PP_ALIGN
 from pptx.util import Pt
 
 # case column numbers
+CMSW_CASE_ID = 0
+SERIAL_NUMBER = 3
 DATE_OF_PROCEDURE = 5
 THRESHOLD_VOLUME = 8
 ATTEMPTED_CONTRAST_INJECTION_VOLUME = 13
@@ -45,8 +48,13 @@ def list_builder(file_names):
             rows = cur.fetchall()
 
             for row in rows:
-                if not(row[TOTAL_DURATION] <= 5 or row[ATTEMPTED_CONTRAST_INJECTION_VOLUME] == row[DIVERTED_CONTRAST_VOLUME]
-                       == row[CUMULATIVE_VOLUME_TO_PATIENT] == row[PERCENTAGE_CONTRAST_DIVERTED] == 0):
+                if row[THRESHOLD_VOLUME] == 0:
+                    debug_msg = 'CMSW ' + str(row[SERIAL_NUMBER]) + ', case ' +\
+                                str(row[CMSW_CASE_ID]) + ' has zero threshold'
+                    logging.warning(debug_msg)
+                if not(row[TOTAL_DURATION] <= 5 or row[ATTEMPTED_CONTRAST_INJECTION_VOLUME] ==
+                       row[DIVERTED_CONTRAST_VOLUME] == row[CUMULATIVE_VOLUME_TO_PATIENT] ==
+                       row[PERCENTAGE_CONTRAST_DIVERTED] == 0):
                     if row[CUMULATIVE_VOLUME_TO_PATIENT] <= row[THRESHOLD_VOLUME] \
                             / 3 <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
                         color = LTGRN
@@ -59,6 +67,7 @@ def list_builder(file_names):
                     elif row[CUMULATIVE_VOLUME_TO_PATIENT] >= row[THRESHOLD_VOLUME] \
                             <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
                         color = RED
+
                     else:
                         color = WHITE
                     cases.append((color, row[DATE_OF_PROCEDURE][0:10], row[DATE_OF_PROCEDURE][11:22],
@@ -110,7 +119,7 @@ def write(file_names, cmsw):
         attempted += case[4]
         diverted += case[6]
 
-    perc_saved = round(diverted/attempted*100)
+    percent_saved = round(diverted/attempted*100)
     prs = Presentation('Slide-Template.pptx')
     total = colors[0] + colors[1] + colors[2] + colors[3]
     title = 'N=' + str(total)
@@ -119,7 +128,7 @@ def write(file_names, cmsw):
     data.categories = ['> Threshold, N=', '< Threshold, N=', '< 2/3 Threshold, N=', '< 1/3 Threshold, N=']
     prs.slides[0].shapes[4].chart.replace_data(data)
     text = ['All cases (N=' + str(len(cases)) + ')',
-            str(perc_saved) + '% avg \nLess \nContrast',
+            str(percent_saved) + '% avg \nLess \nContrast',
             str(round(diverted)) + ' mL less total']
 
     for box in range(5, 8, 1):

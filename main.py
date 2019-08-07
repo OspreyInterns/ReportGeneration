@@ -1,7 +1,8 @@
 # Read SQLite file, then calculate the contrast straight to the patient, output to .xlsx
-
+from logging import Logger
 from tkinter import filedialog
 import tkinter as tk
+import logging
 import DyeMinish_data
 import sales_data
 import rods_rockin_data
@@ -70,10 +71,13 @@ class Application(tk.Frame):
             number += 1
         print('')
         print('Input ready, beginning report...')
-        if not self.delete.get():
-            DyeMinish_data.excel_flag_write(file_names, cmsws)
-        else:
-            DyeMinish_data.excel_destructive_write(file_names, cmsws)
+        try:
+            if not self.delete.get():
+                DyeMinish_data.excel_flag_write(file_names, cmsws)
+            else:
+                DyeMinish_data.excel_destructive_write(file_names, cmsws)
+        except Exception:
+            logging.exception('Unexpected issue')
         print('Done')
 
     @staticmethod
@@ -94,7 +98,10 @@ class Application(tk.Frame):
             number += 1
         print('')
         print('Input ready, beginning report...')
-        sales_data.write(file_names, cmsws)
+        try:
+            sales_data.write(file_names, cmsws)
+        except Exception:
+            logging.exception('Unexpected issue')
         print('Done')
 
     @staticmethod
@@ -115,7 +122,10 @@ class Application(tk.Frame):
             number += 1
         print('')
         print('Input ready, beginning report...')
-        rods_rockin_data.excel_write(file_names, cmsws)
+        try:
+            rods_rockin_data.excel_write(file_names, cmsws)
+        except Exception:
+            logging.exception('Unexpected issue')
         print('Done')
 
     @staticmethod
@@ -135,13 +145,17 @@ class Application(tk.Frame):
             number += 1
         print('')
         print('Input ready, beginning report...')
-        rods_rockin_data.excel_write(file_names, cmsws)
-        sales_data.write(file_names, cmsws)
-        DyeMinish_data.excel_flag_write(file_names, cmsws)
-        DyeMinish_data.excel_destructive_write(file_names, cmsws)
+        try:
+            rods_rockin_data.excel_write(file_names, cmsws)
+            sales_data.write(file_names, cmsws)
+            DyeMinish_data.excel_flag_write(file_names, cmsws)
+            DyeMinish_data.excel_destructive_write(file_names, cmsws)
+        except Exception:
+            logging.exception('Unexpected issue')
         print('Done')
 
 
+logging.basicConfig(filename='Report.log', filemode='w')
 root = tk.Tk()
 app = Application(master=root)
 app.mainloop()
