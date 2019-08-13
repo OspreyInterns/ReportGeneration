@@ -1,5 +1,4 @@
 # Read SQLite file, then calculate the contrast straight to the patient, output to .xlsx
-from logging import Logger
 from tkinter import filedialog
 import tkinter as tk
 import logging

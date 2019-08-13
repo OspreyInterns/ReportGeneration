@@ -12,6 +12,7 @@ from pptx.util import Pt
 CMSW_CASE_ID = 0
 SERIAL_NUMBER = 3
 DATE_OF_PROCEDURE = 5
+DYEVERT_USED = 6
 THRESHOLD_VOLUME = 8
 ATTEMPTED_CONTRAST_INJECTION_VOLUME = 13
 DIVERTED_CONTRAST_VOLUME = 14
@@ -48,32 +49,33 @@ def list_builder(file_names):
             rows = cur.fetchall()
 
             for row in rows:
-                if row[THRESHOLD_VOLUME] == 0:
-                    debug_msg = 'CMSW ' + str(row[SERIAL_NUMBER]) + ', case ' +\
-                                str(row[CMSW_CASE_ID]) + ' has zero threshold'
-                    logging.warning(debug_msg)
-                if not(row[TOTAL_DURATION] <= 5 or row[ATTEMPTED_CONTRAST_INJECTION_VOLUME] ==
-                       row[DIVERTED_CONTRAST_VOLUME] == row[CUMULATIVE_VOLUME_TO_PATIENT] ==
-                       row[PERCENTAGE_CONTRAST_DIVERTED] == 0):
-                    if row[CUMULATIVE_VOLUME_TO_PATIENT] <= row[THRESHOLD_VOLUME] \
-                            / 3 <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
-                        color = LTGRN
-                    elif row[CUMULATIVE_VOLUME_TO_PATIENT] <= row[THRESHOLD_VOLUME] \
-                            * 2/3 <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
-                        color = GREEN
-                    elif row[CUMULATIVE_VOLUME_TO_PATIENT] <= row[THRESHOLD_VOLUME] \
-                            <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
-                        color = YELLOW
-                    elif row[CUMULATIVE_VOLUME_TO_PATIENT] >= row[THRESHOLD_VOLUME] \
-                            <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
-                        color = RED
+                if row[DYEVERT_USED] == 1:
+                    if row[THRESHOLD_VOLUME] == 0:
+                        debug_msg = 'CMSW ' + str(row[SERIAL_NUMBER]) + ', case ' +\
+                                    str(row[CMSW_CASE_ID]) + ' has zero threshold'
+                        logging.warning(debug_msg)
+                    if not(row[TOTAL_DURATION] <= 5 or row[ATTEMPTED_CONTRAST_INJECTION_VOLUME] ==
+                           row[DIVERTED_CONTRAST_VOLUME] == row[CUMULATIVE_VOLUME_TO_PATIENT] ==
+                            row[PERCENTAGE_CONTRAST_DIVERTED] == 0):
+                        if row[CUMULATIVE_VOLUME_TO_PATIENT] <= row[THRESHOLD_VOLUME] \
+                                / 3 <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
+                            color = LTGRN
+                        elif row[CUMULATIVE_VOLUME_TO_PATIENT] <= row[THRESHOLD_VOLUME] \
+                                * 2/3 <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
+                            color = GREEN
+                        elif row[CUMULATIVE_VOLUME_TO_PATIENT] <= row[THRESHOLD_VOLUME] \
+                                <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
+                            color = YELLOW
+                        elif row[CUMULATIVE_VOLUME_TO_PATIENT] >= row[THRESHOLD_VOLUME] \
+                                <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
+                            color = RED
 
-                    else:
-                        color = WHITE
-                    cases.append((color, row[DATE_OF_PROCEDURE][0:10], row[DATE_OF_PROCEDURE][11:22],
-                                  row[THRESHOLD_VOLUME], row[ATTEMPTED_CONTRAST_INJECTION_VOLUME],
-                                  row[CUMULATIVE_VOLUME_TO_PATIENT], row[DIVERTED_CONTRAST_VOLUME],
-                                  row[PERCENTAGE_CONTRAST_DIVERTED]))
+                        else:
+                            color = WHITE
+                        cases.append((color, row[DATE_OF_PROCEDURE][0:10], row[DATE_OF_PROCEDURE][11:22],
+                                     row[THRESHOLD_VOLUME], row[ATTEMPTED_CONTRAST_INJECTION_VOLUME],
+                                     row[CUMULATIVE_VOLUME_TO_PATIENT], row[DIVERTED_CONTRAST_VOLUME],
+                                     row[PERCENTAGE_CONTRAST_DIVERTED]))
     cases.sort(key=_sort_criteria)
     return cases
 

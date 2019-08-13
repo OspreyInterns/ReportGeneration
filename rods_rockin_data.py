@@ -3,7 +3,7 @@ import logging
 import openpyxl
 from openpyxl import Workbook
 from openpyxl.cell import WriteOnlyCell
-from openpyxl.styles import Alignment, Font, PatternFill, NamedStyle
+from openpyxl.styles import Alignment, Font, PatternFill
 import cmsw_read
 
 # case column numbers
@@ -96,6 +96,7 @@ def injection_table(file_names, cmsw):
     data_sheet.column_dimensions['AD'].width = 14.42
     data_sheet.column_dimensions['AE'].width = 10.42
     data_sheet.column_dimensions['AJ'].width = 12.42
+    data_sheet.freeze_panes = 'A2'
     frmcell = [WriteOnlyCell(ws=data_sheet, value='Contrast Aspirated'),
                WriteOnlyCell(ws=data_sheet, value='Contrast Diverted'),
                WriteOnlyCell(ws=data_sheet, value='Percent Saved'),

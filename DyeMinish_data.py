@@ -116,9 +116,9 @@ def list_builder(file_names):
 
             for row in rows:
                 if row[DYEVERT_USED] == 1:
-                    pmdv = ''
+                    pmdv = 'DV'
                 else:
-                    pmdv = 0
+                    pmdv = 'PM'
                 if row[THRESHOLD_VOLUME] == 0:
                     perc_threshold = 'N/A'
                 else:
@@ -158,7 +158,7 @@ def excel_flag_write(file_names, cmsws):
     print('Writing DyeMinish data')
     for row in range(len(cases)):
         for col in range(len(cases[row])-1):
-            if cases[row][19] == 0:
+            if cases[row][19] == 'PM':
                 data_sheet.cell(row=row + 2, column=col + 1, value=cases[row][col]).fill = PatternFill(
                     fill_type='solid', start_color=YELLOW, end_color=YELLOW)
             elif float(cases[row][6]) <= 5.:
@@ -171,7 +171,7 @@ def excel_flag_write(file_names, cmsws):
             else:
                 data_sheet.cell(row=row + 2, column=col + 1, value=cases[row][col])
             data_sheet.cell(row=row + 2, column=col + 1).alignment = Alignment(wrapText=True)
-        if cases[row][19] == 0:
+        if cases[row][19] == 'PM':
             data_sheet.cell(row=row + 2, column=16, value='DyeTect Case')
             data_sheet.cell(row=row + 2, column=14, value='No')
         elif float(cases[row][6]) <= 5.:
@@ -199,7 +199,8 @@ def excel_destructive_write(file_names, cmsws):
     remove_cases = []
     print('Removing cases')
     for case in cases:
-        if case[6] <= 5. or int(case[8]) == int(case[9]) == int(case[10]) == int(case[11]) == 0 or case[19] == 0:
+        if case[6] <= 5. or int(case[8]) == int(case[9]) == int(case[10]) == int(case[11]) == 0 or case[19] == 0\
+                or case[19] == 'PM':
             remove_cases.append(case)
 
     for case in remove_cases:
