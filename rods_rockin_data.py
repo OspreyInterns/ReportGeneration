@@ -56,7 +56,7 @@ IS_DEVICE_REPLACEMENT = 36
 
 # colors
 WHITE = 0
-LTGRN = 1
+LIGHT_GREEN = 1
 GREEN = 2
 YELLOW = 3
 RED = 4
@@ -79,7 +79,7 @@ def injection_table(file_names, cmsw):
     """Connects to an individual database and determines which injections were puffs, injections,
     and leaves some uncatagorized to be classified by a person looking at the surrounding data
     """
-    xlsx2_name = str(cmsw).replace('s', '') + 'rods-detailed-data.xlsx'
+    xlsx2_name = str(cmsw) + 'rods-detailed-data.xlsx'
     wb = Workbook(write_only=True)
     data_sheet = wb.create_sheet()
     yellow = PatternFill(fill_type="solid", start_color=YLW, end_color=YLW)
@@ -270,6 +270,7 @@ def injection_table(file_names, cmsw):
                 cases[-1][30].font = Font(color=BLUE)
 
     print('Applying formatting', end='')
+    logging.debug('Applying formatting')
     for case in range(len(cases)):
         if case % 10000 == 0:
             print('.', end='')
@@ -285,15 +286,18 @@ def injection_table(file_names, cmsw):
                 (cases[case][5].internal_value == 'INJ' and (int(cases[case][29].internal_value) == 0
                                                              or int(cases[case][21].internal_value) == 0)):
             data_sheet.row_dimensions[case + 1].hidden = True
+        # there is no actual way for this error to occur
         cases[case][cell] = _cell
     print('')
     print('Writing injection data', end='')
+    logging.debug('Writing injection data')
     for case in range(len(cases)):
         if case % 10000 == 0:
             print('.', end='')
         data_sheet.append(cases[case])
     print('')
     print('Saving...')
+    logging.debug('Saving...')
     wb.save(xlsx2_name)
 
 
@@ -318,7 +322,7 @@ def list_builder(file_names):
                                                            and row[DIVERT_VOLUME_DIVERTED] <= 1):
                     if row[CUMULATIVE_VOLUME_TO_PATIENT] <= row[THRESHOLD_VOLUME] \
                             / 3 <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
-                        color = LTGRN
+                        color = LIGHT_GREEN
                     elif row[CUMULATIVE_VOLUME_TO_PATIENT] <= row[THRESHOLD_VOLUME] \
                             * 2 / 3 <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
                         color = GREEN
@@ -416,12 +420,14 @@ def excel_write(file_names, cmsw):
         -The in depth table, which details every injection from the databases
     """
     print('Processing Rod\'s summary data')
+    logging.debug('Processing Rod\'s summary data')
     cases = list_builder(file_names)
     xlsx1_name = str(cmsw) + 'rods-case-data.xlsx'
     wb = openpyxl.load_workbook('Rods-Template.xlsx')
     data_sheet = wb.active
     data_sheet.title = 'Sheet1'
     print('Writing summary data')
+    logging.debug('Writing summary data')
     for row in range(len(cases)):
         for col in range(len(cases[row])):
             data_sheet.cell(row=row + 17, column=col + 1, value=cases[row][col])
@@ -430,5 +436,7 @@ def excel_write(file_names, cmsw):
     data_sheet.column_dimensions['A'].hidden = True
     wb.save(xlsx1_name)
     print('Summary data written, processing injection data')
+    logging.debug('Summary data written, processing injection data')
     injection_table(file_names, cmsw)
     print('Rod\'s report finished')
+    logging.debug('Rod\'s report finished')

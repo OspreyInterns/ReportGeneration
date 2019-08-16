@@ -150,22 +150,19 @@ def excel_flag_write(file_names, cmsws):
         -The flagged table, with data that hits possible removal criteria being highlighted in yellow
     """
     print('Processing DyeMinish data with flagging')
+    logging.debug('Processing DyeMinish data with flagging')
     cases = list_builder(file_names)
     xlsx_name = str(cmsws) + 'DyeMinishFlaggedOutput.xlsx'
     wb = openpyxl.load_workbook('Dyeminish-template.xlsx')
     data_sheet = wb.active
     data_sheet.title = 'Sheet1'
     print('Writing DyeMinish data')
+    logging.debug('Writing DyeMinish data')
     for row in range(len(cases)):
         for col in range(len(cases[row])-1):
-            if cases[row][19] == 'PM':
-                data_sheet.cell(row=row + 2, column=col + 1, value=cases[row][col]).fill = PatternFill(
-                    fill_type='solid', start_color=YELLOW, end_color=YELLOW)
-            elif float(cases[row][6]) <= 5.:
-                data_sheet.cell(row=row + 2, column=col + 1, value=cases[row][col]).fill = PatternFill(
-                    fill_type='solid', start_color=YELLOW, end_color=YELLOW)
-            elif cases[row][8] == 0 and cases[row][9] == 0 and cases[row][10] == 0 \
-                    and cases[row][11] == 0:
+            if cases[row][19] == 'PM' or float(cases[row][6]) <= 5. or (cases[row][8] == 0 and cases[row][9] == 0
+                                                                        and cases[row][10] == 0
+                                                                        and cases[row][11] == 0):
                 data_sheet.cell(row=row + 2, column=col + 1, value=cases[row][col]).fill = PatternFill(
                     fill_type='solid', start_color=YELLOW, end_color=YELLOW)
             else:
@@ -184,6 +181,7 @@ def excel_flag_write(file_names, cmsws):
 
     wb.save(xlsx_name)
     print('DyeMinish report with flagged data finished')
+    logging.debug('DyeMinish report with flagged data finished')
 
 
 def excel_destructive_write(file_names, cmsws):
@@ -195,9 +193,11 @@ def excel_destructive_write(file_names, cmsws):
         -The flagged table, with data that hits possible removal criteria being excluded
     """
     print('Processing DyeMinish data with deletion')
+    logging.debug('Processing DyeMinish data with deletion')
     cases = list_builder(file_names)
     remove_cases = []
     print('Removing cases')
+    logging.debug('Removing cases')
     for case in cases:
         if case[6] <= 5. or int(case[8]) == int(case[9]) == int(case[10]) == int(case[11]) == 0 or case[19] == 0\
                 or case[19] == 'PM':
@@ -211,6 +211,7 @@ def excel_destructive_write(file_names, cmsws):
     data_sheet = wb.active
     data_sheet.title = 'Sheet1'
     print('Writing cleaned DyeMinish data')
+    logging.debug('Writing cleaned DyeMinish data')
     for row in range(len(cases)):
         for col in range(len(cases[row])-1):
             data_sheet.cell(row=row+2, column=col+1, value=cases[row][col])
@@ -218,3 +219,4 @@ def excel_destructive_write(file_names, cmsws):
 
     wb.save(xlsx_name)
     print('DyeMinish report with deletion finished')
+    logging.debug('DyeMinish report with deletion finished')

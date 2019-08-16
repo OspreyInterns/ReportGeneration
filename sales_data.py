@@ -90,12 +90,14 @@ def write(file_names, cmsw):
         -The Power Point slide, which was copied from the example
     """
     print('Processing data for sales report')
+    logging.debug('Processing data for sales report')
     cases = list_builder(file_names)
     xlsx_name = str(cmsw) + '-data-tables.xlsx'
     wb = openpyxl.load_workbook('Sales-Template.xlsx')
     data_sheet = wb.active
     data_sheet.title = 'Sheet1'
     print('Data ready, writing sales report')
+    logging.debug('Data ready, writing sales report')
     for row in range(len(cases)):
         for col in range(len(cases[row])):
             data_sheet.cell(row=row + 17, column=col + 1, value=cases[row][col])
@@ -109,6 +111,7 @@ def write(file_names, cmsw):
     attempted = 0
     diverted = 0
     print('Report written, constructing slide')
+    logging.debug('Report written, constructing slide')
     for case in cases:
         if case[0] == RED:
             colors[0] += 1
@@ -143,3 +146,4 @@ def write(file_names, cmsw):
     prs.slides[0].shapes[7].text_frame.paragraphs[0].font.italic = True
     prs.save(pptx_name)
     print('Slides complete')
+    logging.debug('Slides complete')
