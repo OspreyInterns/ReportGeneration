@@ -61,6 +61,11 @@ GREEN = 2
 YELLOW = 3
 RED = 4
 
+# RGB codes
+BLUE = '2F6BC0'
+YLW = 'FBE798'
+GRN = 'C5E1B3'
+
 
 # Write data for sales team to appropriate template
 
@@ -77,11 +82,9 @@ def injection_table(file_names, cmsw):
     xlsx2_name = str(cmsw).replace('s', '') + 'rods-detailed-data.xlsx'
     wb = Workbook(write_only=True)
     data_sheet = wb.create_sheet()
-    yellow = PatternFill(fill_type="solid", start_color='FBE798', end_color='FBE798')
-    green = PatternFill(fill_type="solid", start_color='C5E1B3', end_color='C5E1B3')
+    yellow = PatternFill(fill_type="solid", start_color=YLW, end_color=YLW)
+    green = PatternFill(fill_type="solid", start_color=GRN, end_color=GRN)
     alignment = Alignment(wrap_text=True, shrink_to_fit=True)
-    cell = 0
-    _cell = 0
     data_sheet.title = 'Sheet1'
     data_sheet.row_dimensions.group(2, 3, hidden=True)
     data_sheet.column_dimensions.group('B', 'E', hidden=True)
@@ -89,6 +92,9 @@ def injection_table(file_names, cmsw):
     data_sheet.column_dimensions.group('U', 'U', hidden=True)
     data_sheet.column_dimensions.group('X', 'AC', hidden=True)
     data_sheet.column_dimensions.group('AF', 'AI', hidden=True)
+    # values for width do not match actual values
+    # columns ending in .42 are .71 over the actual width
+    # columns ending in .01 are .72 over the actual width
     data_sheet.column_dimensions['A'].width = 18.42
     data_sheet.column_dimensions['G'].width = 10.01
     data_sheet.column_dimensions['V'].width = 12.01
@@ -106,26 +112,52 @@ def injection_table(file_names, cmsw):
                WriteOnlyCell(ws=data_sheet, value='Flow Rate to Patient'),
                WriteOnlyCell(ws=data_sheet, value='Volume Attempted')
                ]
+    empty_cell = WriteOnlyCell(ws=data_sheet, value='')
     for cell in range(len(frmcell)):
         frmcell[cell].font = Font(bold=True)
-    cases = [['', '', '', '', '', '', frmcell[0], '', '', '', '', '', '', '', '', '', '', '',
-              frmcell[1], frmcell[2], '', frmcell[3], frmcell[4], '', '', '',
-              '', '', '', frmcell[5], frmcell[6], '', '', '', '', frmcell[7]],
-             ['', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '',
-              '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''],
-             ['Time Stamp', 'Syringe Revision', 'PMDV Revision', 'Syringe Address', 'PMDV Address',
-              'Injection or Aspiration', 'Aspirating Contrast', 'Replacing Device', 'Current DyeVert Diameter',
-              'Current Syringe Diameter', 'Starting Syringe Plunger Position', 'Ending Syringe Plunger Position',
-              'Syringe Linear Plunger Position', 'Volume(Injected / Aspirated)',
-              'Starting DyeVert Plus Reservoir Plunger Position', 'Ending DyeVert Plus Reservoir Plunger Position',
-              'DyeVert Plus Reservoir Linear Plunger Position', 'DyeVert Plus Reservoir Volume Diverted',
-              'DyeVert Plus Reservoir Contrast Volume Diverted', 'PercentContrastSaved',
-              'Total Injection Volume to Patient', 'Volume of Contrast Injected', 'Cumulative Contrast Volume Injected',
-              'Volume of Other Injected', 'Starting Contrast Percentage in Syringe',
-              'Ending Contrast Percentage in Syringe', 'Starting Contrast Percentage in DyeVert Plus Reservoir',
-              'Ending Contrast Percentage in DyeVert Plus Reservoir', 'Duration', 'Flow Rate from Syringe',
-              'Flow Rate to Patient', 'Contrast Line Pressure', 'DyeVert Plus Stopcock Position',
-              'System IsSystemPaused', '', '']
+    cases = [[empty_cell, empty_cell, empty_cell, empty_cell, empty_cell, empty_cell, frmcell[0], empty_cell,
+              empty_cell, empty_cell, empty_cell, empty_cell, empty_cell, empty_cell, empty_cell, empty_cell,
+              empty_cell, empty_cell, frmcell[1], frmcell[2], empty_cell, frmcell[3], frmcell[4], empty_cell,
+              empty_cell, empty_cell, empty_cell, empty_cell, empty_cell, frmcell[5], frmcell[6], empty_cell,
+              empty_cell, empty_cell, empty_cell, frmcell[7]],
+             [empty_cell, empty_cell, empty_cell, empty_cell, empty_cell, empty_cell, empty_cell, empty_cell,
+              empty_cell, empty_cell, empty_cell, empty_cell, empty_cell, empty_cell, empty_cell, empty_cell,
+              empty_cell, empty_cell, empty_cell, empty_cell, empty_cell, empty_cell, empty_cell, empty_cell,
+              empty_cell, empty_cell, empty_cell, empty_cell, empty_cell, empty_cell, empty_cell, empty_cell,
+              empty_cell, empty_cell, empty_cell, empty_cell],
+             [WriteOnlyCell(ws=data_sheet, value='Time Stamp'), WriteOnlyCell(ws=data_sheet, value='Syringe Revision'),
+              WriteOnlyCell(ws=data_sheet, value='PMDV Revision'),
+              WriteOnlyCell(ws=data_sheet, value='Syringe Address'),
+              WriteOnlyCell(ws=data_sheet, value='PMDV Address'),
+              WriteOnlyCell(ws=data_sheet, value='Injection or Aspiration'),
+              WriteOnlyCell(ws=data_sheet, value='Aspirating Contrast'),
+              WriteOnlyCell(ws=data_sheet, value='Replacing Device'),
+              WriteOnlyCell(ws=data_sheet, value='Current DyeVert Diameter'),
+              WriteOnlyCell(ws=data_sheet, value='Current Syringe Diameter'),
+              WriteOnlyCell(ws=data_sheet, value='Starting Syringe Plunger Position'),
+              WriteOnlyCell(ws=data_sheet, value='Ending Syringe Plunger Position'),
+              WriteOnlyCell(ws=data_sheet, value='Syringe Linear Plunger Position'),
+              WriteOnlyCell(ws=data_sheet, value='Volume(Injected / Aspirated)'),
+              WriteOnlyCell(ws=data_sheet, value='Starting DyeVert Plus Reservoir Plunger Position'),
+              WriteOnlyCell(ws=data_sheet, value='Ending DyeVert Plus Reservoir Plunger Position'),
+              WriteOnlyCell(ws=data_sheet, value='DyeVert Plus Reservoir Linear Plunger Position'),
+              WriteOnlyCell(ws=data_sheet, value='DyeVert Plus Reservoir Volume Diverted'),
+              WriteOnlyCell(ws=data_sheet, value='DyeVert Plus Reservoir Contrast Volume Diverted'),
+              WriteOnlyCell(ws=data_sheet, value='PercentContrastSaved'),
+              WriteOnlyCell(ws=data_sheet, value='Total Injection Volume to Patient'),
+              WriteOnlyCell(ws=data_sheet, value='Volume of Contrast Injected'),
+              WriteOnlyCell(ws=data_sheet, value='Cumulative Contrast Volume Injected'),
+              WriteOnlyCell(ws=data_sheet, value='Volume of Other Injected'),
+              WriteOnlyCell(ws=data_sheet, value='Starting Contrast Percentage in Syringe'),
+              WriteOnlyCell(ws=data_sheet, value='Ending Contrast Percentage in Syringe'),
+              WriteOnlyCell(ws=data_sheet, value='Starting Contrast Percentage in DyeVert Plus Reservoir'),
+              WriteOnlyCell(ws=data_sheet, value='Ending Contrast Percentage in DyeVert Plus Reservoir'),
+              WriteOnlyCell(ws=data_sheet, value='Duration'),
+              WriteOnlyCell(ws=data_sheet, value='Flow Rate from Syringe'),
+              WriteOnlyCell(ws=data_sheet, value='Flow Rate to Patient'),
+              WriteOnlyCell(ws=data_sheet, value='Contrast Line Pressure'),
+              WriteOnlyCell(ws=data_sheet, value='DyeVert Plus Stopcock Position'),
+              WriteOnlyCell(ws=data_sheet, value='System IsSystemPaused'), empty_cell, empty_cell]
              ]
     case_number = 0
 
@@ -150,15 +182,19 @@ def injection_table(file_names, cmsw):
             rows = cur.fetchall()
 
             for row in rows:
-                puff_inj = ''
                 perc_saved = WriteOnlyCell(value=row[PERCENT_CONTRAST_SAVED], ws=data_sheet)
                 if case_number != row[CASE_ID]:
                     case_number = row[CASE_ID]
-                    _cmsw = str(file_name[-23:-20]).replace('/', '')
-                    cases.append(['CMSW', '', '', '', '', _cmsw, '', '', '', '', '',
-                                  '', '', '', '', '', '', '', '', '', ''])
-                    cases.append(['Case', '', '', '', '', case_id_number[case_number], '', '', '', '', '', '', '', '',
-                                  '', '', '', '', '', '', ''])
+                    _cmsw = cmsw_read.cmsw_id_read(file_name)
+                    cases.append([WriteOnlyCell(ws=data_sheet, value='CMSW'), empty_cell, empty_cell, empty_cell,
+                                  empty_cell, WriteOnlyCell(ws=data_sheet, value=_cmsw), empty_cell, empty_cell,
+                                  empty_cell, empty_cell, empty_cell, empty_cell, empty_cell, empty_cell, empty_cell,
+                                  empty_cell, empty_cell, empty_cell, empty_cell, empty_cell, empty_cell])
+                    cases.append([WriteOnlyCell(ws=data_sheet, value='Case'), empty_cell, empty_cell, empty_cell,
+                                  empty_cell, WriteOnlyCell(ws=data_sheet, value=case_id_number[case_number]),
+                                  empty_cell, empty_cell, empty_cell, empty_cell, empty_cell, empty_cell, empty_cell,
+                                  empty_cell, empty_cell, empty_cell, empty_cell, empty_cell, empty_cell, empty_cell,
+                                  empty_cell])
                 if row[IS_AN_INJECTION] == 1:
                     inj_asp = 'INJ'
                 else:
@@ -189,46 +225,68 @@ def injection_table(file_names, cmsw):
                         debug_msg = 'Event ' + str(row[0]) + ' in cmsw ' + str(cmsw_read.cmsw_id_read(file_name)) + \
                                     ', case ' + str(row[CASE_ID]) + ' matched neither type'
                         logging.warning(debug_msg)
+                        puff_inj = empty_cell
                 else:
+                    puff_inj = empty_cell
                     perc_saved.font = Font(bold=False)
-                cases.append([row[TIME_STAMP], row[SYRINGE_REVISION], row[PMDV_REVISION], row[SYRINGE_ADDRESS],
-                              row[PMDV_ADDRESS], inj_asp, contrast_asp, replacement, row[DYEVERT_DIAMETER],
-                              row[SYRINGE_DIAMETER], row[STARTING_SYRINGE_POSITION], row[ENDING_SYRINGE_POSITION],
-                              row[LINEAR_SYRINGE_MOVEMENT], row[SYRINGE_VOLUME_INJECTED_OR_ASPIRATED],
-                              row[STARTING_DYEVERT_POSITION], row[ENDING_DYEVERT_POSITION],
-                              row[LINEAR_DYEVERT_MOVEMENT], row[DIVERT_VOLUME_DIVERTED],
-                              round(row[DYEVERT_CONTRAST_VOLUME_DIVERTED], 2), perc_saved,
-                              row[INJECTION_VOLUME_TO_PATIENT], round(row[CONTRAST_VOLUME_TO_PATIENT], 2),
-                              round(row[CUMULATIVE_CONTRAST_VOLUME_TO_PATIENT], 2), row[OTHER_VOLUME_TO_PATIENT],
-                              row[STARTING_CONTRAST_PERCENT_IN_SYRINGE], row[ENDING_CONTRAST_PERCENT_IN_SYRINGE],
-                              row[STARTING_CONTRAST_PERCENT_IN_DYEVERT], row[ENDING_CONTRAST_PERCENT_IN_DYEVERT],
-                              row[DURATION], round(row[FLOW_RATE_TO_FROM_SYRINGE], 2),
-                              round(row[FLOW_RATE_TO_PATIENT], 2), row[PREDOMINANT_CONTRAST_LINE_PRESSURE],
-                              row[STARTING_DYEVERT_STOPCOCK_POSITION], row[IS_SYSTEM_PAUSED], '',
-                              round(row[CONTRAST_VOLUME_TO_PATIENT] + row[DYEVERT_CONTRAST_VOLUME_DIVERTED], 2),
+                cases.append([WriteOnlyCell(ws=data_sheet, value=row[TIME_STAMP]),
+                              WriteOnlyCell(ws=data_sheet, value=row[SYRINGE_REVISION]),
+                              WriteOnlyCell(ws=data_sheet, value=row[PMDV_REVISION]),
+                              WriteOnlyCell(ws=data_sheet, value=row[SYRINGE_ADDRESS]),
+                              WriteOnlyCell(ws=data_sheet, value=row[PMDV_ADDRESS]),
+                              WriteOnlyCell(ws=data_sheet, value=inj_asp),
+                              WriteOnlyCell(ws=data_sheet, value=contrast_asp),
+                              WriteOnlyCell(ws=data_sheet, value=replacement),
+                              WriteOnlyCell(ws=data_sheet, value=row[DYEVERT_DIAMETER]),
+                              WriteOnlyCell(ws=data_sheet, value=row[SYRINGE_DIAMETER]),
+                              WriteOnlyCell(ws=data_sheet, value=row[STARTING_SYRINGE_POSITION]),
+                              WriteOnlyCell(ws=data_sheet, value=row[ENDING_SYRINGE_POSITION]),
+                              WriteOnlyCell(ws=data_sheet, value=row[LINEAR_SYRINGE_MOVEMENT]),
+                              WriteOnlyCell(ws=data_sheet, value=row[SYRINGE_VOLUME_INJECTED_OR_ASPIRATED]),
+                              WriteOnlyCell(ws=data_sheet, value=row[STARTING_DYEVERT_POSITION]),
+                              WriteOnlyCell(ws=data_sheet, value=row[ENDING_DYEVERT_POSITION]),
+                              WriteOnlyCell(ws=data_sheet, value=row[LINEAR_DYEVERT_MOVEMENT]),
+                              WriteOnlyCell(ws=data_sheet, value=row[DIVERT_VOLUME_DIVERTED]),
+                              WriteOnlyCell(ws=data_sheet, value=round(row[DYEVERT_CONTRAST_VOLUME_DIVERTED], 2)),
+                              perc_saved, WriteOnlyCell(ws=data_sheet, value=row[INJECTION_VOLUME_TO_PATIENT]),
+                              WriteOnlyCell(ws=data_sheet, value=round(row[CONTRAST_VOLUME_TO_PATIENT], 2)),
+                              WriteOnlyCell(ws=data_sheet, value=round(row[CUMULATIVE_CONTRAST_VOLUME_TO_PATIENT], 2)),
+                              WriteOnlyCell(ws=data_sheet, value=row[OTHER_VOLUME_TO_PATIENT]),
+                              WriteOnlyCell(ws=data_sheet, value=row[STARTING_CONTRAST_PERCENT_IN_SYRINGE]),
+                              WriteOnlyCell(ws=data_sheet, value=row[ENDING_CONTRAST_PERCENT_IN_SYRINGE]),
+                              WriteOnlyCell(ws=data_sheet, value=row[STARTING_CONTRAST_PERCENT_IN_DYEVERT]),
+                              WriteOnlyCell(ws=data_sheet, value=row[ENDING_CONTRAST_PERCENT_IN_DYEVERT]),
+                              WriteOnlyCell(ws=data_sheet, value=row[DURATION]),
+                              WriteOnlyCell(ws=data_sheet, value=round(row[FLOW_RATE_TO_FROM_SYRINGE], 2)),
+                              WriteOnlyCell(ws=data_sheet, value=round(row[FLOW_RATE_TO_PATIENT], 2)),
+                              WriteOnlyCell(ws=data_sheet, value=row[PREDOMINANT_CONTRAST_LINE_PRESSURE]),
+                              WriteOnlyCell(ws=data_sheet, value=row[STARTING_DYEVERT_STOPCOCK_POSITION]),
+                              WriteOnlyCell(ws=data_sheet, value=row[IS_SYSTEM_PAUSED]),
+                             WriteOnlyCell(ws=data_sheet, value=''),
+                              WriteOnlyCell(ws=data_sheet, value=round(row[CONTRAST_VOLUME_TO_PATIENT]
+                                                                       + row[DYEVERT_CONTRAST_VOLUME_DIVERTED], 2)),
                               puff_inj])
+                cases[-1][29].font = Font(color=BLUE)
+                cases[-1][30].font = Font(color=BLUE)
 
+    print('Applying formatting', end='')
     for case in range(len(cases)):
-        for cell in range(len(cases[case])):
-            if type(cases[case][cell]) is not openpyxl.cell.cell.Cell:
-                _cell = WriteOnlyCell(value=cases[case][cell], ws=data_sheet)
-                cases[case][cell] = _cell
-    for case in range(len(cases)):
+        if case % 10000 == 0:
+            print('.', end='')
         for cell in range(len(cases[case])):
             _cell = cases[case][cell]
             _cell.alignment = alignment
-            if cases[case][5].internal_value == 'INJ':
+            if cases[case][5].internal_value == 'INJ' and _cell != empty_cell:
                 if cases[case][19].internal_value == 0:
                     _cell.fill = yellow
                 if case > 3 and cases[case][19].internal_value > 0:
                     _cell.fill = green
-            if (cell == 29 or cell == 30) and case > 2:
-                _cell.font = Font(color='2F6BC0')
         if (cases[case][5].internal_value == 'ASP' and cases[case][6].internal_value != 'Yes')or \
-                (cases[case][5].internal_value == 'INJ' and (int(cases[case][28].internal_value) == 0
+                (cases[case][5].internal_value == 'INJ' and (int(cases[case][29].internal_value) == 0
                                                              or int(cases[case][21].internal_value) == 0)):
             data_sheet.row_dimensions[case + 1].hidden = True
         cases[case][cell] = _cell
+    print('')
     print('Writing injection data', end='')
     for case in range(len(cases)):
         if case % 10000 == 0:

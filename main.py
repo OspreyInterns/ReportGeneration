@@ -2,6 +2,7 @@
 from tkinter import filedialog
 import tkinter as tk
 import logging
+import os
 import DyeMinish_data
 import sales_data
 import rods_rockin_data
@@ -154,7 +155,18 @@ class Application(tk.Frame):
         print('Done')
 
 
-logging.basicConfig(filename='Report.log', filemode='w')
-root = tk.Tk()
-app = Application(master=root)
-app.mainloop()
+if os.path.isfile('Dyeminish-template.xlsx') and os.path.isfile('Rods-Template.xlsx') \
+        and os.path.isfile('Sales-Template.xlsx') and os.path.isfile('Slide-Template.pptx'):
+    logging.basicConfig(filename='Report.log', filemode='w')
+    root = tk.Tk()
+    app = Application(master=root)
+    app.mainloop()
+else:
+    if not os.path.isfile('Dyeminish-template.xlsx'):
+        print('Missing Dyeminish-template.xlsx')
+    if not os.path.isfile('Rods-Template.xlsx'):
+        print('Missing Rods-Template.xlsx')
+    if not os.path.isfile('Sales-Template.xlsx'):
+        print('Missing Sales-Template.xlsx')
+    if not os.path.isfile('Slide-Template.pptx'):
+        print('Missing Slide-Template.pptx')

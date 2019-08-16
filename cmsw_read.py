@@ -14,4 +14,4 @@ def cmsw_id_read(file_name):
     return serial[0]
 
 # Testing function
-# cmsw_id_read(TEST_FILE)
+# print(cmsw_id_read(TEST_FILE))

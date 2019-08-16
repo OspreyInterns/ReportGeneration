@@ -22,12 +22,12 @@ TOTAL_DURATION = 19
 
 # colors
 WHITE = 0
-LTGRN = 1
+LIGHT_GREEEN = 1
 GREEN = 2
 YELLOW = 3
 RED = 4
 
-# Write data for sales team to appropriate templates for power point and
+# Write data for sales team to appropriate templates for power point and excel
 
 
 def _sort_criteria(case):
@@ -59,7 +59,7 @@ def list_builder(file_names):
                             row[PERCENTAGE_CONTRAST_DIVERTED] == 0):
                         if row[CUMULATIVE_VOLUME_TO_PATIENT] <= row[THRESHOLD_VOLUME] \
                                 / 3 <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
-                            color = LTGRN
+                            color = LIGHT_GREEEN
                         elif row[CUMULATIVE_VOLUME_TO_PATIENT] <= row[THRESHOLD_VOLUME] \
                                 * 2/3 <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
                             color = GREEN
@@ -81,7 +81,6 @@ def list_builder(file_names):
 
 
 def write(file_names, cmsw):
-    print('Processing data for sales report')
     """Writes data into the an Excel Sheet and a Power Point slide as seen in the example
     Takes two inputs:
         -the file names of the CMSW databases
@@ -90,6 +89,7 @@ def write(file_names, cmsw):
         -The summary table
         -The Power Point slide, which was copied from the example
     """
+    print('Processing data for sales report')
     cases = list_builder(file_names)
     xlsx_name = str(cmsw) + '-data-tables.xlsx'
     wb = openpyxl.load_workbook('Sales-Template.xlsx')
@@ -116,7 +116,7 @@ def write(file_names, cmsw):
             colors[1] += 1
         elif case[0] == GREEN:
             colors[2] += 1
-        elif case[0] == LTGRN:
+        elif case[0] == LIGHT_GREEEN:
             colors[3] += 1
         attempted += case[4]
         diverted += case[6]
