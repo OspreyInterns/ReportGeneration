@@ -22,16 +22,16 @@ class Application(tk.Frame):
         self.pack()
 
         self.dyeminish = tk.Button(self)
-        self.dyeminish['text'] = 'Generate Dyeminsh Report'
+        self.dyeminish['text'] = 'Generate Dyeminish Report'
         self.dyeminish['command'] = self.dyeminish_report
         self.dyeminish.pack(side='top')
 
-        self.delete_flag = tk.Checkbutton(self)
-        self.delete_flag['text'] = 'Check to delete flagged entries'
-        self.delete_flag['variable'] = self.delete
-        self.delete_flag['onvalue'] = True
-        self.delete_flag['offvalue'] = False
-        self.delete_flag.pack(side='top')
+        # self.delete_flag = tk.Checkbutton(self)
+        # self.delete_flag['text'] = 'Check to delete flagged entries'
+        # self.delete_flag['variable'] = self.delete
+        # self.delete_flag['onvalue'] = True
+        # self.delete_flag['offvalue'] = False
+        # self.delete_flag.pack(side='top')
 
         self.sales = tk.Button(self)
         self.sales['text'] = 'Generate Sales Report'
@@ -60,13 +60,17 @@ class Application(tk.Frame):
                                                  filetypes=(('sqlite files', '*.sqlite'), ('all files', '*.*')))
         cmsws = []
         print('Processing file selection', end='')
-        logging.debug('Processing file selection')
         for file in file_names:
             cmsws.append(str(cmsw_read.cmsw_id_read(file)))
             print('.', end='')
+
+        number = 0
+
+        for cmsw in cmsws:
+            cmsws[number] = cmsw
+            number += 1
         print('')
         print('Input ready, beginning report...')
-        logging.debug('Input ready, beginning report...')
         try:
             if not self.delete.get():
                 DyeMinish_data.excel_flag_write(file_names, cmsws)
@@ -75,66 +79,72 @@ class Application(tk.Frame):
         except Exception:
             logging.exception('Unexpected issue')
         print('Done')
-        logging.debug('Done')
 
     @staticmethod
     def sales_report():
         """Opens file browser, processes chosen files, then calls the write method"""
         cmsws = []
+        number = 0
         file_names = filedialog.askopenfilenames(title='Select database file',
                                                  filetypes=(('sqlite files', '*.sqlite'), ('all files', '*.*')))
         print('Processing file selection', end='')
-        logging.debug('Processing file selection')
         file_names = list(file_names)
         for file in file_names:
             cmsws.append(str(cmsw_read.cmsw_id_read(file)))
             print('.', end='')
+        for cmsw in cmsws:
+            cmsw = cmsw.replace('/', '')
+            cmsws[number] = cmsw
+            number += 1
         print('')
         print('Input ready, beginning report...')
-        logging.debug('Input ready, beginning report...')
         try:
             sales_data.write(file_names, cmsws)
         except Exception:
             logging.exception('Unexpected issue')
         print('Done')
-        logging.debug('Done')
 
     @staticmethod
     def rods_report():
         """Opens file browser, processes chosen files, then calls the excel_write method"""
         cmsws = []
+        number = 0
         file_names = filedialog.askopenfilenames(title='Select database file',
                                                  filetypes=(('sqlite files', '*.sqlite'), ('all files', '*.*')))
         print('Processing file selection', end='')
-        logging.debug('Processing file selection')
         file_names = list(file_names)
         for file in file_names:
             cmsws.append(str(cmsw_read.cmsw_id_read(file)))
             print('.', end='')
+        for cmsw in cmsws:
+            cmsw = cmsw.replace('/', '')
+            cmsws[number] = cmsw
+            number += 1
         print('')
         print('Input ready, beginning report...')
-        logging.debug('Input ready, beginning report...')
         try:
             rods_rockin_data.excel_write(file_names, cmsws)
         except Exception:
             logging.exception('Unexpected issue')
         print('Done')
-        logging.debug('Done')
 
     @staticmethod
     def all_reports():
         cmsws = []
+        number = 0
         file_names = filedialog.askopenfilenames(title='Select database file',
                                                  filetypes=(('sqlite files', '*.sqlite'), ('all files', '*.*')))
         print('Processing file selection', end='')
-        logging.debug('Processing file selection')
         file_names = list(file_names)
         for file in file_names:
             cmsws.append(str(cmsw_read.cmsw_id_read(file)))
             print('.', end='')
+        for cmsw in cmsws:
+            cmsw = cmsw.replace('/', '')
+            cmsws[number] = cmsw
+            number += 1
         print('')
         print('Input ready, beginning report...')
-        logging.debug('Input ready, beginning report...')
         try:
             rods_rockin_data.excel_write(file_names, cmsws)
             sales_data.write(file_names, cmsws)
@@ -143,25 +153,20 @@ class Application(tk.Frame):
         except Exception:
             logging.exception('Unexpected issue')
         print('Done')
-        logging.debug('Done')
 
 
-logging.basicConfig(filename='Report.log', filemode='w', level=10)
 if os.path.isfile('Dyeminish-template.xlsx') and os.path.isfile('Rods-Template.xlsx') \
         and os.path.isfile('Sales-Template.xlsx') and os.path.isfile('Slide-Template.pptx'):
+    logging.basicConfig(filename='Report.log', filemode='w')
     root = tk.Tk()
     app = Application(master=root)
     app.mainloop()
 else:
     if not os.path.isfile('Dyeminish-template.xlsx'):
         print('Missing Dyeminish-template.xlsx')
-        logging.error('Missing Dyeminish-template.xlsx')
     if not os.path.isfile('Rods-Template.xlsx'):
         print('Missing Rods-Template.xlsx')
-        logging.error('Missing Rods-Template.xlsx')
     if not os.path.isfile('Sales-Template.xlsx'):
         print('Missing Sales-Template.xlsx')
-        logging.error('Missing Sales-Template.xlsx')
     if not os.path.isfile('Slide-Template.pptx'):
         print('Missing Slide-Template.pptx')
-        logging.error('Missing Slide-Template.pptx')

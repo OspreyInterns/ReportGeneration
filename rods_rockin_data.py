@@ -16,8 +16,51 @@ ATTEMPTED_CONTRAST_INJECTION_VOLUME = 13
 DIVERTED_CONTRAST_VOLUME = 14
 CUMULATIVE_VOLUME_TO_PATIENT = 15
 PERCENTAGE_CONTRAST_DIVERTED = 16
+# Total duration.  
+# 19 for CMSW 
+# 20 for iPad 
 TOTAL_DURATION = 19
 
+#
+# Use these for iPad 
+# #  injection column numbers
+# TIME_STAMP = 2
+# SYRINGE_REVISION = 3
+# PMDV_REVISION = 4
+# IS_AN_INJECTION = 8 
+# IS_ASPIRATING_CONTRAST = 9
+# DYEVERT_DIAMETER = 10
+# SYRINGE_DIAMETER = 11
+# STARTING_SYRINGE_POSITION = 12
+# ENDING_SYRINGE_POSITION = 13
+# LINEAR_SYRINGE_MOVEMENT = 14
+# SYRINGE_VOLUME_INJECTED_OR_ASPIRATED = 15
+# STARTING_DYEVERT_POSITION = 16
+# ENDING_DYEVERT_POSITION = 17
+# LINEAR_DYEVERT_MOVEMENT = 18
+# DIVERT_VOLUME_DIVERTED = 19
+# DYEVERT_CONTRAST_VOLUME_DIVERTED = 20
+# PERCENT_CONTRAST_SAVED = 21
+# INJECTION_VOLUME_TO_PATIENT = 22
+# CONTRAST_VOLUME_TO_PATIENT = 23
+# CUMULATIVE_CONTRAST_VOLUME_TO_PATIENT = 24
+# OTHER_VOLUME_TO_PATIENT = 25
+# STARTING_CONTRAST_PERCENT_IN_SYRINGE = 27
+# STARTING_CONTRAST_PERCENT_IN_DYEVERT = 29
+# ENDING_CONTRAST_PERCENT_IN_DYEVERT = 30
+# DURATION = 31
+# FLOW_RATE_TO_FROM_SYRINGE = 32
+# FLOW_RATE_TO_PATIENT = 33
+# PREDOMINANT_CONTRAST_LINE_PRESSURE = 34
+# STARTING_DYEVERT_STOPCOCK_POSITION = 35
+# IS_SYSTEM_PAUSED = 36
+# ENDING_CONTRAST_PERCENT_IN_SYRINGE = 28
+# SYRINGE_ADDRESS = 5
+# PMDV_ADDRESS = 4
+# IS_DEVICE_REPLACEMENT = 7
+
+#
+# Use these for CMSW 
 #  injection column numbers
 TIME_STAMP = 2
 SYRINGE_REVISION = 3
@@ -54,9 +97,10 @@ SYRINGE_ADDRESS = 34
 PMDV_ADDRESS = 35
 IS_DEVICE_REPLACEMENT = 36
 
+
 # colors
 WHITE = 0
-LIGHT_GREEN = 1
+LTGRN = 1
 GREEN = 2
 YELLOW = 3
 RED = 4
@@ -79,7 +123,7 @@ def injection_table(file_names, cmsw):
     """Connects to an individual database and determines which injections were puffs, injections,
     and leaves some uncatagorized to be classified by a person looking at the surrounding data
     """
-    xlsx2_name = str(cmsw) + 'rods-detailed-data.xlsx'
+    xlsx2_name = str(cmsw).replace('s', '') + 'rods-detailed-data.xlsx'
     wb = Workbook(write_only=True)
     data_sheet = wb.create_sheet()
     yellow = PatternFill(fill_type="solid", start_color=YLW, end_color=YLW)
@@ -225,6 +269,7 @@ def injection_table(file_names, cmsw):
                         debug_msg = 'Event ' + str(row[0]) + ' in cmsw ' + str(cmsw_read.cmsw_id_read(file_name)) + \
                                     ', case ' + str(row[CASE_ID]) + ' matched neither type'
                         logging.warning(debug_msg)
+                        print(debug_msg)
                         puff_inj = empty_cell
                 else:
                     puff_inj = empty_cell
@@ -270,7 +315,6 @@ def injection_table(file_names, cmsw):
                 cases[-1][30].font = Font(color=BLUE)
 
     print('Applying formatting', end='')
-    logging.debug('Applying formatting')
     for case in range(len(cases)):
         if case % 10000 == 0:
             print('.', end='')
@@ -286,18 +330,17 @@ def injection_table(file_names, cmsw):
                 (cases[case][5].internal_value == 'INJ' and (int(cases[case][29].internal_value) == 0
                                                              or int(cases[case][21].internal_value) == 0)):
             data_sheet.row_dimensions[case + 1].hidden = True
-        # there is no actual way for this error to occur
         cases[case][cell] = _cell
     print('')
     print('Writing injection data', end='')
-    logging.debug('Writing injection data')
     for case in range(len(cases)):
-        if case % 10000 == 0:
+#        print('Writing event ',case, 'of ',len(cases))
+        if case % 10 == 0:
             print('.', end='')
+            print('Writing event ', case, 'of ', len(cases))
         data_sheet.append(cases[case])
     print('')
     print('Saving...')
-    logging.debug('Saving...')
     wb.save(xlsx2_name)
 
 
@@ -316,30 +359,31 @@ def list_builder(file_names):
             uses = dyevert_uses(file_name)
 
             for row in rows:
-                if not (row[TOTAL_DURATION] <= 5) and not (row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]
-                                                           == row[DIVERTED_CONTRAST_VOLUME]
-                                                           == row[LINEAR_DYEVERT_MOVEMENT] == 0
-                                                           and row[DIVERT_VOLUME_DIVERTED] <= 1):
-                    if row[CUMULATIVE_VOLUME_TO_PATIENT] <= row[THRESHOLD_VOLUME] \
-                            / 3 <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
-                        color = LIGHT_GREEN
-                    elif row[CUMULATIVE_VOLUME_TO_PATIENT] <= row[THRESHOLD_VOLUME] \
-                            * 2 / 3 <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
-                        color = GREEN
-                    elif row[CUMULATIVE_VOLUME_TO_PATIENT] <= row[THRESHOLD_VOLUME] \
-                            <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
-                        color = YELLOW
-                    elif row[CUMULATIVE_VOLUME_TO_PATIENT] >= row[THRESHOLD_VOLUME] \
-                            <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
-                        color = RED
-                    else:
-                        color = WHITE
-                    cases.append((color, row[DATE_OF_PROCEDURE][0:10], row[DATE_OF_PROCEDURE][11:22],
-                                  row[THRESHOLD_VOLUME], row[ATTEMPTED_CONTRAST_INJECTION_VOLUME],
-                                  row[CUMULATIVE_VOLUME_TO_PATIENT], row[DIVERTED_CONTRAST_VOLUME],
-                                  row[PERCENTAGE_CONTRAST_DIVERTED], uses[row[CMSW_CASE_ID]][1],
-                                  uses[row[CMSW_CASE_ID]][3], uses[row[CMSW_CASE_ID]][0],
-                                  uses[row[CMSW_CASE_ID]][2], int(row[SERIAL_NUMBER])))
+                #don't do the exclusion anymore. Updating this file to no longer reject excluded cases.
+                # if not (row[TOTAL_DURATION] <= 5) and not (row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]
+                                                           # == row[DIVERTED_CONTRAST_VOLUME]
+                                                           # == row[LINEAR_DYEVERT_MOVEMENT] == 0
+                                                           # and row[DIVERT_VOLUME_DIVERTED] <= 1):
+                if row[CUMULATIVE_VOLUME_TO_PATIENT] <= row[THRESHOLD_VOLUME] \
+                        / 3 <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
+                    color = LTGRN
+                elif row[CUMULATIVE_VOLUME_TO_PATIENT] <= row[THRESHOLD_VOLUME] \
+                        * 2 / 3 <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
+                    color = GREEN
+                elif row[CUMULATIVE_VOLUME_TO_PATIENT] <= row[THRESHOLD_VOLUME] \
+                        <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
+                    color = YELLOW
+                elif row[CUMULATIVE_VOLUME_TO_PATIENT] >= row[THRESHOLD_VOLUME] \
+                        <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
+                    color = RED
+                else:
+                    color = WHITE
+                cases.append((color, row[DATE_OF_PROCEDURE][0:10], row[DATE_OF_PROCEDURE][11:22],
+                              row[THRESHOLD_VOLUME], row[ATTEMPTED_CONTRAST_INJECTION_VOLUME],
+                              row[CUMULATIVE_VOLUME_TO_PATIENT], row[DIVERTED_CONTRAST_VOLUME],
+                              row[PERCENTAGE_CONTRAST_DIVERTED], uses[row[CMSW_CASE_ID]][1],
+                              uses[row[CMSW_CASE_ID]][3], uses[row[CMSW_CASE_ID]][0],
+                              uses[row[CMSW_CASE_ID]][2], row[SERIAL_NUMBER]))
     cases.sort(key=_sort_criteria)
 
     return cases
@@ -420,14 +464,12 @@ def excel_write(file_names, cmsw):
         -The in depth table, which details every injection from the databases
     """
     print('Processing Rod\'s summary data')
-    logging.debug('Processing Rod\'s summary data')
     cases = list_builder(file_names)
     xlsx1_name = str(cmsw) + 'rods-case-data.xlsx'
     wb = openpyxl.load_workbook('Rods-Template.xlsx')
     data_sheet = wb.active
     data_sheet.title = 'Sheet1'
     print('Writing summary data')
-    logging.debug('Writing summary data')
     for row in range(len(cases)):
         for col in range(len(cases[row])):
             data_sheet.cell(row=row + 17, column=col + 1, value=cases[row][col])
@@ -436,7 +478,5 @@ def excel_write(file_names, cmsw):
     data_sheet.column_dimensions['A'].hidden = True
     wb.save(xlsx1_name)
     print('Summary data written, processing injection data')
-    logging.debug('Summary data written, processing injection data')
     injection_table(file_names, cmsw)
     print('Rod\'s report finished')
-    logging.debug('Rod\'s report finished')

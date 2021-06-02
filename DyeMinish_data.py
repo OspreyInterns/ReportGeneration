@@ -1,8 +1,8 @@
-
 import sqlite3 as sqlite
 import logging
 import openpyxl
 from openpyxl.styles import Alignment, PatternFill
+import datetime
 
 # case column numbers
 CMSW_CASE_ID = 0
@@ -15,24 +15,39 @@ ATTEMPTED_CONTRAST_INJECTION_VOLUME = 13
 DIVERTED_CONTRAST_VOLUME = 14
 CUMULATIVE_VOLUME_TO_PATIENT = 15
 PERCENTAGE_CONTRAST_DIVERTED = 16
-TOTAL_DURATION = 19
-END_TIME = 20
-
-#  injection column numbers
-IS_AN_INJECTION = 5
-LINEAR_DYEVERT_MOVEMENT = 15
-DYEVERT_CONTRAST_VOLUME_DIVERTED = 17
-PERCENT_CONTRAST_SAVED = 18
-CONTRAST_VOLUME_TO_PATIENT = 20
-PREDOMINANT_CONTRAST_LINE_PRESSURE = 30
+DYEVERTEZ = 23
+#
+# Use these for iPad
+TOTAL_DURATION = 20
+END_TIME = 19
+##(from injection table)
+IS_AN_INJECTION = 8
+LINEAR_DYEVERT_MOVEMENT = 18
+DYEVERT_CONTRAST_VOLUME_DIVERTED = 20
+PERCENT_CONTRAST_SAVED = 21
+CONTRAST_VOLUME_TO_PATIENT = 23
+PREDOMINANT_CONTRAST_LINE_PRESSURE = 34
+# #
+#
+# Use these for CMSW
+# TOTAL_DURATION = 19
+# END_TIME = 20
+# ##(from injection table)
+# IS_AN_INJECTION = 5
+# LINEAR_DYEVERT_MOVEMENT = 15
+# DYEVERT_CONTRAST_VOLUME_DIVERTED = 17
+# PERCENT_CONTRAST_SAVED = 18
+# CONTRAST_VOLUME_TO_PATIENT = 20
+# PREDOMINANT_CONTRAST_LINE_PRESSURE = 30
 
 # Highlight color
 YELLOW = 'FFFF00'
+
+
 # Reads from the injection table to sum up the injections
 
 
 def straight_to_patient(file_name):
-
     con = sqlite.connect(file_name)
 
     with con:
@@ -46,18 +61,17 @@ def straight_to_patient(file_name):
         for placeholder in range(len(rows)):
             contrast_inj.append([0, 0])
         for row in rows:
-            if row[IS_AN_INJECTION] == 1 and (row[PERCENT_CONTRAST_SAVED] <= 1 or row[LINEAR_DYEVERT_MOVEMENT] <= 20)\
+            if row[IS_AN_INJECTION] == 1 and (row[PERCENT_CONTRAST_SAVED] <= 1 or row[LINEAR_DYEVERT_MOVEMENT] <= 20) \
                     and row[PREDOMINANT_CONTRAST_LINE_PRESSURE] == 0:
-                contrast_inj[row[CASE_ID]-1][0] += row[CONTRAST_VOLUME_TO_PATIENT]
+                contrast_inj[row[CASE_ID] - 1][0] += row[CONTRAST_VOLUME_TO_PATIENT]
             if row[IS_AN_INJECTION] == 1 and (row[DYEVERT_CONTRAST_VOLUME_DIVERTED] == 0
                                               or row[LINEAR_DYEVERT_MOVEMENT] <= 20):
-                contrast_inj[row[CASE_ID]-1][1] += row[CONTRAST_VOLUME_TO_PATIENT]
+                contrast_inj[row[CASE_ID] - 1][1] += row[CONTRAST_VOLUME_TO_PATIENT]
 
         return contrast_inj
 
 
 def would_be_saved(file_name):
-
     con = sqlite.connect(file_name)
 
     with con:
@@ -69,13 +83,18 @@ def would_be_saved(file_name):
 
         for row in rows:
             case_info.append([row[CMSW_CASE_ID], row[ATTEMPTED_CONTRAST_INJECTION_VOLUME],
-                              row[THRESHOLD_VOLUME], row[LINEAR_DYEVERT_MOVEMENT], row[SERIAL_NUMBER]])
+                              row[THRESHOLD_VOLUME], row[CUMULATIVE_VOLUME_TO_PATIENT], row[SERIAL_NUMBER]])
 
+            print(row, case_info)
     what_if = []
+
     direct_injected = straight_to_patient(file_name)
 
+    print("now printing case info, case by case")
     for case in case_info:
-        vol_inj_off = direct_injected[case[0]-1][0]
+        print(case)
+        vol_inj_off = direct_injected[case[0] - 1][0]
+        #        print(" case 3",case[3]," vol-inj-off",vol_inj_off)
         vol_inj_on = case[3] - vol_inj_off
         vol_att_on = case[1] - vol_inj_off
         if vol_att_on != 0:
@@ -93,7 +112,7 @@ def would_be_saved(file_name):
             logging.warning(debug_msg)
             what_if.append([vol_inj_off, 0])
         else:
-            what_if.append([vol_inj_off, vol_inj_off/case[2]])
+            what_if.append([vol_inj_off, vol_inj_off / case[2]])
 
     return what_if
 
@@ -116,27 +135,45 @@ def list_builder(file_names):
 
             for row in rows:
                 if row[DYEVERT_USED] == 1:
-                    pmdv = 'DV'
+                    if row[DYEVERTEZ] == 0:
+                        pmdv = 'DV'
+                    else:
+                        pmdv = 'DVEZ'
                 else:
                     pmdv = 'PM'
                 if row[THRESHOLD_VOLUME] == 0:
                     perc_threshold = 'N/A'
                 else:
                     perc_threshold = row[CUMULATIVE_VOLUME_TO_PATIENT] / row[THRESHOLD_VOLUME] * 100
-                if row[2] == '2.1.24':
+                print(row[2], row[END_TIME])
+                if row[2] == '2.1.21' or row[2] == '2.1.24' or row[2] == '2.0.1981' or row[2] == '2.0.2013':
                     cases.append(('', '', '', row[DATE_OF_PROCEDURE][0:10], row[CASE_ID][-12:-4], '',
-                                 row[TOTAL_DURATION], row[THRESHOLD_VOLUME], row[ATTEMPTED_CONTRAST_INJECTION_VOLUME],
-                                 row[DIVERTED_CONTRAST_VOLUME], row[CUMULATIVE_VOLUME_TO_PATIENT],
-                                 row[PERCENTAGE_CONTRAST_DIVERTED], perc_threshold,
-                                  '', to_patient[row[CMSW_CASE_ID]-1][0], '', '',
-                                 what_if[row[CMSW_CASE_ID] - 1][0], what_if[row[CMSW_CASE_ID] - 1][1], pmdv))
+                                  row[TOTAL_DURATION], row[THRESHOLD_VOLUME], row[ATTEMPTED_CONTRAST_INJECTION_VOLUME],
+                                  row[DIVERTED_CONTRAST_VOLUME], row[CUMULATIVE_VOLUME_TO_PATIENT],
+                                  row[PERCENTAGE_CONTRAST_DIVERTED], perc_threshold,
+                                  '', to_patient[row[CMSW_CASE_ID] - 1][0], '', '',
+                                  what_if[row[CMSW_CASE_ID] - 1][0], what_if[row[CMSW_CASE_ID] - 1][1],
+                                  row[SERIAL_NUMBER], pmdv))
                 else:
+                    # put end time into datetime object.
+                    if row[2] == '2.2.44':
+                        case_end = datetime.datetime.strptime(row[END_TIME], '%Y/%m/%d %I:%M.%S %p')
+                    elif row[2] == '2.2.38':
+                        case_end = datetime.datetime.strptime(row[END_TIME], '%m/%d/%y %I:%M %p')
+                    elif row[2] == '2.1.56':
+                        case_end = datetime.datetime.strptime(row[END_TIME], '%d %b %Y %H:%M:%S')
+                    else:
+                        # else this is 2.1.67 system.
+                        case_end = datetime.datetime.strptime(row[END_TIME], '%Y-%m-%d %H:%M:%S.%f')
+                    print(row[2], case_end.strftime('%H:%M:%S'))
                     cases.append(('', '', '', row[DATE_OF_PROCEDURE][0:10], row[CASE_ID][-12:-4],
-                                 row[END_TIME][-8:], row[TOTAL_DURATION], row[THRESHOLD_VOLUME],
-                                 row[ATTEMPTED_CONTRAST_INJECTION_VOLUME], row[DIVERTED_CONTRAST_VOLUME],
-                                 row[CUMULATIVE_VOLUME_TO_PATIENT], row[PERCENTAGE_CONTRAST_DIVERTED], perc_threshold,
-                                  '', to_patient[row[CMSW_CASE_ID]-1][0], '', '',
-                                 what_if[row[CMSW_CASE_ID] - 1][0], what_if[row[CMSW_CASE_ID] - 1][1], pmdv))
+                                  case_end.strftime('%H:%M:%S'), row[TOTAL_DURATION], row[THRESHOLD_VOLUME],
+                                  #                                row[END_TIME], row[TOTAL_DURATION], row[THRESHOLD_VOLUME],
+                                  row[ATTEMPTED_CONTRAST_INJECTION_VOLUME], row[DIVERTED_CONTRAST_VOLUME],
+                                  row[CUMULATIVE_VOLUME_TO_PATIENT], row[PERCENTAGE_CONTRAST_DIVERTED], perc_threshold,
+                                  '', to_patient[row[CMSW_CASE_ID] - 1][0], '', '',
+                                  what_if[row[CMSW_CASE_ID] - 1][0], what_if[row[CMSW_CASE_ID] - 1][1],
+                                  row[SERIAL_NUMBER], pmdv))
 
     return cases
 
@@ -150,25 +187,28 @@ def excel_flag_write(file_names, cmsws):
         -The flagged table, with data that hits possible removal criteria being highlighted in yellow
     """
     print('Processing DyeMinish data with flagging')
-    logging.debug('Processing DyeMinish data with flagging')
     cases = list_builder(file_names)
     xlsx_name = str(cmsws) + 'DyeMinishFlaggedOutput.xlsx'
     wb = openpyxl.load_workbook('Dyeminish-template.xlsx')
     data_sheet = wb.active
     data_sheet.title = 'Sheet1'
     print('Writing DyeMinish data')
-    logging.debug('Writing DyeMinish data')
     for row in range(len(cases)):
-        for col in range(len(cases[row])-1):
-            if cases[row][19] == 'PM' or float(cases[row][6]) <= 5. or (cases[row][8] == 0 and cases[row][9] == 0
-                                                                        and cases[row][10] == 0
-                                                                        and cases[row][11] == 0):
+        for col in range(len(cases[row]) - 1):
+            if cases[row][20] == 'PM':
+                data_sheet.cell(row=row + 2, column=col + 1, value=cases[row][col]).fill = PatternFill(
+                    fill_type='solid', start_color=YELLOW, end_color=YELLOW)
+            elif float(cases[row][6]) <= 5.:
+                data_sheet.cell(row=row + 2, column=col + 1, value=cases[row][col]).fill = PatternFill(
+                    fill_type='solid', start_color=YELLOW, end_color=YELLOW)
+            elif cases[row][8] == 0 and cases[row][9] == 0 and cases[row][10] == 0 \
+                    and cases[row][11] == 0:
                 data_sheet.cell(row=row + 2, column=col + 1, value=cases[row][col]).fill = PatternFill(
                     fill_type='solid', start_color=YELLOW, end_color=YELLOW)
             else:
                 data_sheet.cell(row=row + 2, column=col + 1, value=cases[row][col])
             data_sheet.cell(row=row + 2, column=col + 1).alignment = Alignment(wrapText=True)
-        if cases[row][19] == 'PM':
+        if cases[row][20] == 'PM':
             data_sheet.cell(row=row + 2, column=16, value='DyeTect Case')
             data_sheet.cell(row=row + 2, column=14, value='No')
         elif float(cases[row][6]) <= 5.:
@@ -178,10 +218,11 @@ def excel_flag_write(file_names, cmsws):
                 and cases[row][11] == 0:
             data_sheet.cell(row=row + 2, column=16, value='No contrast was injected')
             data_sheet.cell(row=row + 2, column=14, value='No')
+        # write the case type (pmdv) into column 36
+        data_sheet.cell(row=row + 2, column=36, value=cases[row][20])
 
     wb.save(xlsx_name)
     print('DyeMinish report with flagged data finished')
-    logging.debug('DyeMinish report with flagged data finished')
 
 
 def excel_destructive_write(file_names, cmsws):
@@ -193,14 +234,12 @@ def excel_destructive_write(file_names, cmsws):
         -The flagged table, with data that hits possible removal criteria being excluded
     """
     print('Processing DyeMinish data with deletion')
-    logging.debug('Processing DyeMinish data with deletion')
     cases = list_builder(file_names)
     remove_cases = []
     print('Removing cases')
-    logging.debug('Removing cases')
     for case in cases:
-        if case[6] <= 5. or int(case[8]) == int(case[9]) == int(case[10]) == int(case[11]) == 0 or case[19] == 0\
-                or case[19] == 'PM':
+        if case[6] <= 5. or int(case[8]) == int(case[9]) == int(case[10]) == int(case[11]) == 0 or case[20] == 0 \
+                or case[20] == 'PM':
             remove_cases.append(case)
 
     for case in remove_cases:
@@ -211,12 +250,10 @@ def excel_destructive_write(file_names, cmsws):
     data_sheet = wb.active
     data_sheet.title = 'Sheet1'
     print('Writing cleaned DyeMinish data')
-    logging.debug('Writing cleaned DyeMinish data')
     for row in range(len(cases)):
-        for col in range(len(cases[row])-1):
-            data_sheet.cell(row=row+2, column=col+1, value=cases[row][col])
-            data_sheet.cell(row=row+2, column=col+1).alignment = Alignment(wrapText=True)
+        for col in range(len(cases[row]) - 1):
+            data_sheet.cell(row=row + 2, column=col + 1, value=cases[row][col])
+            data_sheet.cell(row=row + 2, column=col + 1).alignment = Alignment(wrapText=True)
 
     wb.save(xlsx_name)
     print('DyeMinish report with deletion finished')
-    logging.debug('DyeMinish report with deletion finished')
