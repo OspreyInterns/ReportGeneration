@@ -21,11 +21,11 @@ PERCENTAGE_CONTRAST_DIVERTED = 16
 # Total duration.  
 # 19 for CMSW 
 # 20 for iPad 
-TOTAL_DURATION = 20
+TOTAL_DURATION = 19
 
 # colors
 WHITE = 0
-LIGHT_GREEEN = 1
+LIGHT_GREEN = 1
 GREEN = 2
 YELLOW = 3
 RED = 4
@@ -59,28 +59,33 @@ def list_builder(file_names):
                                     str(row[CMSW_CASE_ID]) + ' has zero threshold'
                         logging.warning(debug_msg)
                         print(debug_msg)
-                    if not(row[TOTAL_DURATION] <= 5 or row[ATTEMPTED_CONTRAST_INJECTION_VOLUME] ==
-                           row[DIVERTED_CONTRAST_VOLUME] == row[CUMULATIVE_VOLUME_TO_PATIENT] ==
-                            row[PERCENTAGE_CONTRAST_DIVERTED] == 0):
-                        if row[CUMULATIVE_VOLUME_TO_PATIENT] <= row[THRESHOLD_VOLUME] \
-                                / 3 <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
-                            color = LIGHT_GREEEN
-                        elif row[CUMULATIVE_VOLUME_TO_PATIENT] <= row[THRESHOLD_VOLUME] \
-                                * 2/3 <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
-                            color = GREEN
-                        elif row[CUMULATIVE_VOLUME_TO_PATIENT] <= row[THRESHOLD_VOLUME] \
-                                <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
-                            color = YELLOW
-                        elif row[CUMULATIVE_VOLUME_TO_PATIENT] >= row[THRESHOLD_VOLUME] \
-                                <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
-                            color = RED
+                    comment = ''
+                    if int(row[TOTAL_DURATION]) <= 5:
+                        comment = 'Duration < 5 min'
+                    if row[DIVERTED_CONTRAST_VOLUME] < 5.:
+                        comment = '< 5mL Diverted'
+                    if row[ATTEMPTED_CONTRAST_INJECTION_VOLUME] == row[DIVERTED_CONTRAST_VOLUME] == \
+                        row[CUMULATIVE_VOLUME_TO_PATIENT] == row[PERCENTAGE_CONTRAST_DIVERTED] == 0:
+                        comment = 'No contrast injected'
+                    if row[CUMULATIVE_VOLUME_TO_PATIENT] <= row[THRESHOLD_VOLUME] \
+                            / 3 <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
+                         color = LIGHT_GREEN
+                    elif row[CUMULATIVE_VOLUME_TO_PATIENT] <= row[THRESHOLD_VOLUME] \
+                            * 2/3 <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
+                        color = GREEN
+                    elif row[CUMULATIVE_VOLUME_TO_PATIENT] <= row[THRESHOLD_VOLUME] \
+                             <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
+                        color = YELLOW
+                    elif row[CUMULATIVE_VOLUME_TO_PATIENT] >= row[THRESHOLD_VOLUME] \
+                            <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
+                        color = RED
 
-                        else:
-                            color = WHITE
-                        cases.append((color, row[DATE_OF_PROCEDURE][0:10], row[DATE_OF_PROCEDURE][11:22],
+                    else:
+                        color = WHITE
+                    cases.append((color, row[DATE_OF_PROCEDURE][0:10], row[DATE_OF_PROCEDURE][11:22],
                                      row[THRESHOLD_VOLUME], row[ATTEMPTED_CONTRAST_INJECTION_VOLUME],
                                      row[CUMULATIVE_VOLUME_TO_PATIENT], row[DIVERTED_CONTRAST_VOLUME],
-                                     row[PERCENTAGE_CONTRAST_DIVERTED]))
+                                     row[PERCENTAGE_CONTRAST_DIVERTED], comment, ''))
     cases.sort(key=_sort_criteria)
     return cases
 
@@ -96,15 +101,39 @@ def write(file_names, cmsw):
     """
     print('Processing data for sales report')
     cases = list_builder(file_names)
+    cases.append((0, '', '', '', '', '', '', '', '', ''))
+    cases.append((0, 'Excluded cases', '', '', '', '', '', '', '', ''))
     xlsx_name = str(cmsw) + '-data-tables.xlsx'
     wb = openpyxl.load_workbook('Sales-Template.xlsx')
     data_sheet = wb.active
     data_sheet.title = 'Sheet1'
     print('Data ready, writing sales report')
+    line = 17
     for row in range(len(cases)):
-        for col in range(len(cases[row])):
-            data_sheet.cell(row=row + 17, column=col + 1, value=cases[row][col])
-            data_sheet.cell(row=row + 17, column=col + 1).alignment = Alignment(wrapText=True)
+        if cases[row][8] == '':
+            for col in range(len(cases[row])):
+                data_sheet.cell(row=line, column=col + 1, value=cases[row][col])
+                data_sheet.cell(row=line, column=col + 1).alignment = Alignment(wrapText=True)
+            line += 1
+    exclusions = ['Exclusion Criteia', 'Case less than 5 min', '<5 mL diverted', 'No contrast used']
+    iterations = 0
+    for row in range(len(cases)):
+        if not cases[row][8] == '':
+            for col in range(len(cases[row])):
+                data_sheet.cell(row=line, column=col + 1, value=cases[row][col])
+                data_sheet.cell(row=line, column=col + 1).alignment = Alignment(wrapText=True)
+            if iterations <= len(exclusions):
+                data_sheet.cell(row=line, column=10, value=exclusions[iterations])
+                data_sheet.cell(row=line, column=10).alignment = Alignment(wrapText=True)
+                iterations += 1
+            line += 1
+    if iterations <= len(exclusions):
+        while iterations < len(exclusions):
+            data_sheet.cell(row=line, column=10, value=exclusions[iterations])
+            data_sheet.cell(row=line, column=10).alignment = Alignment(wrapText=True)
+            iterations += 1
+            line += 1
+
 
     data_sheet.column_dimensions['A'].hidden = True
     wb.save(xlsx_name)
@@ -121,7 +150,7 @@ def write(file_names, cmsw):
             colors[1] += 1
         elif case[0] == GREEN:
             colors[2] += 1
-        elif case[0] == LIGHT_GREEEN:
+        elif case[0] == LIGHT_GREEN:
             colors[3] += 1
         attempted += case[4]
         diverted += case[6]

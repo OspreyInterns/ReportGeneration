@@ -326,15 +326,15 @@ def injection_table(file_names, cmsw):
                     _cell.fill = yellow
                 if case > 3 and cases[case][19].internal_value > 0:
                     _cell.fill = green
-        if (cases[case][5].internal_value == 'ASP' and cases[case][6].internal_value != 'Yes')or \
-                (cases[case][5].internal_value == 'INJ' and (int(cases[case][29].internal_value) == 0
-                                                             or int(cases[case][21].internal_value) == 0)):
-            data_sheet.row_dimensions[case + 1].hidden = True
-        cases[case][cell] = _cell
+            if (cases[case][5].internal_value == 'ASP' and cases[case][6].internal_value != 'Yes') or \
+                    (cases[case][5].internal_value == 'INJ' and (int(cases[case][29].internal_value) == 0
+                                                                 or int(cases[case][21].internal_value) == 0)):
+                data_sheet.row_dimensions[case + 1].hidden = True
+            cases[case][cell] = _cell
     print('')
     print('Writing injection data', end='')
     for case in range(len(cases)):
-#        print('Writing event ',case, 'of ',len(cases))
+        # print('Writing event ',case, 'of ',len(cases))
         if case % 10 == 0:
             print('.', end='')
             print('Writing event ', case, 'of ', len(cases))
@@ -349,21 +349,18 @@ def list_builder(file_names):
     cases = []
 
     for file_name in file_names:
-
         con = sqlite.connect(file_name)
         with con:
-
             cur = con.cursor()
             cur.execute('SELECT * FROM CMSWCases')
             rows = cur.fetchall()
             uses = dyevert_uses(file_name)
-
             for row in rows:
-                #don't do the exclusion anymore. Updating this file to no longer reject excluded cases.
+                # don't do the exclusion anymore. Updating this file to no longer reject excluded cases.
                 # if not (row[TOTAL_DURATION] <= 5) and not (row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]
-                                                           # == row[DIVERTED_CONTRAST_VOLUME]
-                                                           # == row[LINEAR_DYEVERT_MOVEMENT] == 0
-                                                           # and row[DIVERT_VOLUME_DIVERTED] <= 1):
+                                                        # == row[DIVERTED_CONTRAST_VOLUME]
+                                                        # == row[LINEAR_DYEVERT_MOVEMENT] == 0
+                                                        # and row[DIVERT_VOLUME_DIVERTED] <= 1):
                 if row[CUMULATIVE_VOLUME_TO_PATIENT] <= row[THRESHOLD_VOLUME] \
                         / 3 <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
                     color = LTGRN

@@ -1,6 +1,5 @@
-
 import sqlite3 as sqlite
-import logging
+# import logging
 import openpyxl
 from openpyxl.styles import Alignment
 from pptx import Presentation
@@ -21,8 +20,7 @@ PERCENTAGE_CONTRAST_DIVERTED = 16
 # Total duration.  
 # 19 for CMSW 
 # 20 for iPad 
-TOTAL_DURATION = 20
-
+TOTAL_DURATION = 19
 
 # colors
 WHITE = 0
@@ -30,7 +28,6 @@ LIGHT_GREEEN = 1
 GREEN = 2
 YELLOW = 3
 RED = 4
-
 
 
 # Write data for sales team to appropriate templates for power point and excel
@@ -45,8 +42,8 @@ def list_builder(file_names):
     """Takes the list of files and builds the list of lists to write"""
     print('building list')
     cases = []
-    inkind=0
-    divertedvolcount =0
+    # inkind = 0
+    divertedvolcount = 0
 
     for file_name in file_names:
         con = sqlite.connect(file_name)
@@ -58,13 +55,13 @@ def list_builder(file_names):
             rows = cur.fetchall()
 
             for row in rows:
-                
+
                 # ~ if row[DYEVERT_USED] == 1:
-                    # if row[THRESHOLD_VOLUME] == 0:
-                        # debug_msg = 'CMSW ' + str(row[SERIAL_NUMBER]) + ', case ' +\
-                                    # str(row[CMSW_CASE_ID]) + ' has zero threshold'
-                        # logging.warning(debug_msg)
-                        # print(debug_msg)
+                # if row[THRESHOLD_VOLUME] == 0:
+                # debug_msg = 'CMSW ' + str(row[SERIAL_NUMBER]) + ', case ' +\
+                # str(row[CMSW_CASE_ID]) + ' has zero threshold'
+                # logging.warning(debug_msg)
+                # print(debug_msg)
                 # adjust the in-kind logic here.  Create list cases_excluded with reason as last column
 
                 # if not(row[TOTAL_DURATION] <= 5 or row[ATTEMPTED_CONTRAST_INJECTION_VOLUME] ==
@@ -74,18 +71,18 @@ def list_builder(file_names):
                 # use this block for traffic-light over/under thresholdred color scheme
 
                 # if row[CUMULATIVE_VOLUME_TO_PATIENT] <= row[THRESHOLD_VOLUME] :
-                    # color = GREEN
+                # color = GREEN
                 # # elif row[CUMULATIVE_VOLUME_TO_PATIENT] <= row[THRESHOLD_VOLUME]:
-                    # # color = GREEN
+                # # color = GREEN
                 # elif row[CUMULATIVE_VOLUME_TO_PATIENT] <= row[THRESHOLD_VOLUME]*3/1.5:
-                    # color = YELLOW
+                # color = YELLOW
                 # elif row[CUMULATIVE_VOLUME_TO_PATIENT] >= row[THRESHOLD_VOLUME] *3/1.5 :
-                    # color = RED
+                # color = RED
 
                 # else:
                 # color = WHITE
 
-# use this block for 5 color default scheme:
+                # use this block for 5 color default scheme:
 
                 if row[CUMULATIVE_VOLUME_TO_PATIENT] <= row[THRESHOLD_VOLUME] \
                         / 3 <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
@@ -103,38 +100,37 @@ def list_builder(file_names):
                 else:
                     color = WHITE
 
-                #in kind comments criteria
-                comment=''
-                if row[TOTAL_DURATION] <=5 :
-                    comment='Case less than 5 minutes'
-                elif row[CUMULATIVE_VOLUME_TO_PATIENT] == row[DIVERTED_CONTRAST_VOLUME] == row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]==0:
-                    comment='0 mL contrast injected'
-                elif row[DYEVERT_USED]== 0 :
-                    comment='DyeTect Case'
-                elif row[DIVERTED_CONTRAST_VOLUME] < 5 :
-                    comment ='Diverted Volume < 5 mL'
-                elif row[ATTEMPTED_CONTRAST_INJECTION_VOLUME] < 20 :
-                    comment ='Attempted Volume < 20 mL'
-                elif row[CUMULATIVE_VOLUME_TO_PATIENT] < 30 :
-# No In-Kind anymore
-#                    comment = 'In-Kind for Kidneys 2.0 case'
-#                    inkind =inkind +1
-# check for clinical diverted volume <10%
+                # in kind comments criteria
+                comment = ''
+                if row[TOTAL_DURATION] <= 5:
+                    comment = 'Case less than 5 minutes'
+                elif row[CUMULATIVE_VOLUME_TO_PATIENT] == row[DIVERTED_CONTRAST_VOLUME] == row[
+                        ATTEMPTED_CONTRAST_INJECTION_VOLUME] == 0:
+                    comment = '0 mL contrast injected'
+                elif row[DYEVERT_USED] == 0:
+                    comment = 'DyeTect Case'
+                elif row[DIVERTED_CONTRAST_VOLUME] < 5:
+                    comment = 'Diverted Volume < 5 mL'
+                elif row[ATTEMPTED_CONTRAST_INJECTION_VOLUME] < 20:
+                    comment = 'Attempted Volume < 20 mL'
+                elif row[CUMULATIVE_VOLUME_TO_PATIENT] < 30:
+                    # No In-Kind anymore
+                    #                    comment = 'In-Kind for Kidneys 2.0 case'
+                    #                    inkind =inkind +1
+                    # check for clinical diverted volume <10%
                     if row[PERCENTAGE_CONTRAST_DIVERTED] < 10:
                         divertedvolcount = divertedvolcount + 1
                         comment += ", Diverted volume < 10%"
                 else:
-                    comment =''
-                        
-# add logic here for in-kind count.  if meets IK2.0 then reason as last string item in the list.  Mod append for new string. 
-                cases.append((color, row[DATE_OF_PROCEDURE][0:10], row[DATE_OF_PROCEDURE][11:22],
-                             row[THRESHOLD_VOLUME], row[ATTEMPTED_CONTRAST_INJECTION_VOLUME],
-                             row[CUMULATIVE_VOLUME_TO_PATIENT], row[DIVERTED_CONTRAST_VOLUME],
-                             row[PERCENTAGE_CONTRAST_DIVERTED],comment))
-                                    
+                    comment = ''
 
-                    
-                                        
+                # add logic here for in-kind count.  if meets IK2.0 then reason as last string item in the list.  Mod
+                # append for new string.
+                cases.append((color, row[DATE_OF_PROCEDURE][0:10], row[DATE_OF_PROCEDURE][11:22],
+                              row[THRESHOLD_VOLUME], row[ATTEMPTED_CONTRAST_INJECTION_VOLUME],
+                              row[CUMULATIVE_VOLUME_TO_PATIENT], row[DIVERTED_CONTRAST_VOLUME],
+                              row[PERCENTAGE_CONTRAST_DIVERTED], comment))
+
     cases.sort(key=_sort_criteria)
     return cases
 
@@ -152,10 +148,10 @@ def write(file_names, cmsw):
         - In-Kind summary table 
         - Diverted Vol <10% count for Clinical team. 
     """
-    
+
     # this will need adjustment to write the cases, then the cases_excluded list, with the summary table. Check if
     # insertions work on the excel library.
-    
+
     print('Processing data for sales report')
     cases = list_builder(file_names)
     xlsx_name = str(cmsw) + '-data-tables-inkind.xlsx'
@@ -163,7 +159,6 @@ def write(file_names, cmsw):
     data_sheet = wb.active
     data_sheet.title = 'Sheet1'
     print('Data ready, writing sales report')
-
 
     for row in range(len(cases)):
         for col in range(len(cases[row])):
@@ -190,7 +185,7 @@ def write(file_names, cmsw):
         attempted += case[4]
         diverted += case[6]
 
-    percent_saved = round(diverted/attempted*100)
+    percent_saved = round(diverted / attempted * 100)
     prs = Presentation('Slide-Template.pptx')
     total = colors[0] + colors[1] + colors[2] + colors[3]
     title = 'N=' + str(total)
@@ -204,9 +199,9 @@ def write(file_names, cmsw):
 
     for box in range(5, 8, 1):
         prs.slides[0].shapes[box].text_frame.clear()
-        prs.slides[0].shapes[box].text_frame.paragraphs[0].text = text[box-5]
+        prs.slides[0].shapes[box].text_frame.paragraphs[0].text = text[box - 5]
         prs.slides[0].shapes[box].text_frame.paragraphs[0].allignment = PP_ALIGN.CENTER
-        prs.slides[0].shapes[box].text_frame.paragraphs[0].font.size = Pt(26-2*box)
+        prs.slides[0].shapes[box].text_frame.paragraphs[0].font.size = Pt(26 - 2 * box)
 
     prs.slides[0].shapes[5].text_frame.paragraphs[0].font.bold = True
     prs.slides[0].shapes[7].text_frame.paragraphs[0].font.italic = True

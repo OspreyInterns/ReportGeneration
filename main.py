@@ -72,10 +72,10 @@ class Application(tk.Frame):
         print('')
         print('Input ready, beginning report...')
         try:
-            if not self.delete.get():
-                DyeMinish_data.excel_flag_write(file_names, cmsws)
-            else:
-                DyeMinish_data.excel_destructive_write(file_names, cmsws)
+            # if not self.delete.get():
+            DyeMinish_data.excel_flag_write(file_names, cmsws)
+            # else:
+                # DyeMinish_data.excel_destructive_write(file_names, cmsws)
         except Exception:
             logging.exception('Unexpected issue')
         print('Done')

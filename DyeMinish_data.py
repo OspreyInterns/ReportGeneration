@@ -5,6 +5,8 @@ from openpyxl.styles import Alignment, PatternFill
 import datetime
 
 # case column numbers
+from rods_rockin_data import FLOW_RATE_TO_FROM_SYRINGE, FLOW_RATE_TO_PATIENT
+
 CMSW_CASE_ID = 0
 CASE_ID = 1
 SERIAL_NUMBER = 3
@@ -18,27 +20,27 @@ PERCENTAGE_CONTRAST_DIVERTED = 16
 DYEVERTEZ = 23
 #
 # Use these for iPad
-TOTAL_DURATION = 20
-END_TIME = 19
-##(from injection table)
-IS_AN_INJECTION = 8
-LINEAR_DYEVERT_MOVEMENT = 18
-DYEVERT_CONTRAST_VOLUME_DIVERTED = 20
-PERCENT_CONTRAST_SAVED = 21
-CONTRAST_VOLUME_TO_PATIENT = 23
-PREDOMINANT_CONTRAST_LINE_PRESSURE = 34
+# TOTAL_DURATION = 20
+# END_TIME = 19
+# (from injection table)
+# IS_AN_INJECTION = 8
+# LINEAR_DYEVERT_MOVEMENT = 18
+# DYEVERT_CONTRAST_VOLUME_DIVERTED = 20
+# PERCENT_CONTRAST_SAVED = 21
+# CONTRAST_VOLUME_TO_PATIENT = 23
+# PREDOMINANT_CONTRAST_LINE_PRESSURE = 34
 # #
 #
 # Use these for CMSW
-# TOTAL_DURATION = 19
-# END_TIME = 20
-# ##(from injection table)
-# IS_AN_INJECTION = 5
-# LINEAR_DYEVERT_MOVEMENT = 15
-# DYEVERT_CONTRAST_VOLUME_DIVERTED = 17
-# PERCENT_CONTRAST_SAVED = 18
-# CONTRAST_VOLUME_TO_PATIENT = 20
-# PREDOMINANT_CONTRAST_LINE_PRESSURE = 30
+TOTAL_DURATION = 19
+END_TIME = 20
+# (from injection table)
+IS_AN_INJECTION = 5
+LINEAR_DYEVERT_MOVEMENT = 15
+DYEVERT_CONTRAST_VOLUME_DIVERTED = 17
+PERCENT_CONTRAST_SAVED = 18
+CONTRAST_VOLUME_TO_PATIENT = 20
+PREDOMINANT_CONTRAST_LINE_PRESSURE = 30
 
 # Highlight color
 YELLOW = 'FFFF00'
@@ -119,20 +121,17 @@ def would_be_saved(file_name):
 
 def list_builder(file_names):
     """Takes the list of files and builds the list of lists to write"""
-    cases = []
+    DyeMinishCases = []
+    #PuffInjCases = []
 
     for file_name in file_names:
-
         con = sqlite.connect(file_name)
-
         with con:
-
             cur = con.cursor()
             cur.execute('SELECT * FROM CMSWCases')
             rows = cur.fetchall()
             what_if = would_be_saved(file_name)
             to_patient = straight_to_patient(file_name)
-
             for row in rows:
                 if row[DYEVERT_USED] == 1:
                     if row[DYEVERTEZ] == 0:
@@ -147,7 +146,7 @@ def list_builder(file_names):
                     perc_threshold = row[CUMULATIVE_VOLUME_TO_PATIENT] / row[THRESHOLD_VOLUME] * 100
                 print(row[2], row[END_TIME])
                 if row[2] == '2.1.21' or row[2] == '2.1.24' or row[2] == '2.0.1981' or row[2] == '2.0.2013':
-                    cases.append(('', '', '', row[DATE_OF_PROCEDURE][0:10], row[CASE_ID][-12:-4], '',
+                    DyeMinishCases.append(('', '', '', row[DATE_OF_PROCEDURE][0:10], row[CASE_ID][-12:-4], '',
                                   row[TOTAL_DURATION], row[THRESHOLD_VOLUME], row[ATTEMPTED_CONTRAST_INJECTION_VOLUME],
                                   row[DIVERTED_CONTRAST_VOLUME], row[CUMULATIVE_VOLUME_TO_PATIENT],
                                   row[PERCENTAGE_CONTRAST_DIVERTED], perc_threshold,
@@ -166,16 +165,81 @@ def list_builder(file_names):
                         # else this is 2.1.67 system.
                         case_end = datetime.datetime.strptime(row[END_TIME], '%Y-%m-%d %H:%M:%S.%f')
                     print(row[2], case_end.strftime('%H:%M:%S'))
-                    cases.append(('', '', '', row[DATE_OF_PROCEDURE][0:10], row[CASE_ID][-12:-4],
-                                  case_end.strftime('%H:%M:%S'), row[TOTAL_DURATION], row[THRESHOLD_VOLUME],
-                                  #                                row[END_TIME], row[TOTAL_DURATION], row[THRESHOLD_VOLUME],
-                                  row[ATTEMPTED_CONTRAST_INJECTION_VOLUME], row[DIVERTED_CONTRAST_VOLUME],
-                                  row[CUMULATIVE_VOLUME_TO_PATIENT], row[PERCENTAGE_CONTRAST_DIVERTED], perc_threshold,
-                                  '', to_patient[row[CMSW_CASE_ID] - 1][0], '', '',
-                                  what_if[row[CMSW_CASE_ID] - 1][0], what_if[row[CMSW_CASE_ID] - 1][1],
-                                  row[SERIAL_NUMBER], pmdv))
+                    DyeMinishCases.append(('', '', '', row[DATE_OF_PROCEDURE][0:10], row[CASE_ID][-12:-4],
+                                           case_end.strftime('%H:%M:%S'), row[TOTAL_DURATION], row[THRESHOLD_VOLUME],
+                                           # row[END_TIME], row[TOTAL_DURATION], row[THRESHOLD_VOLUME],
+                                           row[ATTEMPTED_CONTRAST_INJECTION_VOLUME], row[DIVERTED_CONTRAST_VOLUME],
+                                           row[CUMULATIVE_VOLUME_TO_PATIENT], row[PERCENTAGE_CONTRAST_DIVERTED],
+                                           perc_threshold, '', to_patient[row[CMSW_CASE_ID] - 1][0], '', '',
+                                           what_if[row[CMSW_CASE_ID] - 1][0], what_if[row[CMSW_CASE_ID] - 1][1],
+                                           row[SERIAL_NUMBER], pmdv))
 
-    return cases
+    return DyeMinishCases
+
+
+def dyevert_uses(file_name):
+    """Connects to an individual database to calculate the volume of contrast injected
+    and the number of times contrast was injected both in puffs and injections
+    Volume data is currently unused
+    """
+    con = sqlite.connect(file_name)
+    dyevert_used_inj = 0
+    dyevert_not_used_inj = 0
+    dyevert_used_puff = 0
+    dyevert_not_used_puff = 0
+    vol_used_inj = 0
+    vol_not_used_inj = 0
+    vol_used_puff = 0
+    vol_not_used_puff = 0
+    case_number = 0
+    uses = []
+
+    with con:
+
+        cur = con.cursor()
+        cur.execute('SELECT * FROM CMSWInjections')
+        rows = cur.fetchall()
+
+        for ph in range(rows[-1][1] + 1):
+            uses.append([0, 0, 0, 0])
+        for row in rows:
+            if row[CASE_ID] != case_number:
+                uses[case_number] = ([dyevert_not_used_inj, dyevert_used_inj, dyevert_not_used_puff, dyevert_used_puff])
+                dyevert_used_inj = 0
+                dyevert_not_used_inj = 0
+                dyevert_used_puff = 0
+                dyevert_not_used_puff = 0
+                vol_used_inj = 0
+                vol_not_used_inj = 0
+                vol_used_puff = 0
+                vol_not_used_puff = 0
+                case_number = row[1]
+            if row[CASE_ID] == case_number:
+                if row[CONTRAST_VOLUME_TO_PATIENT] + row[DYEVERT_CONTRAST_VOLUME_DIVERTED] >= 3:
+                    puff_inj = 1
+                elif row[CONTRAST_VOLUME_TO_PATIENT] + row[DYEVERT_CONTRAST_VOLUME_DIVERTED] <= 2:
+                    puff_inj = 2
+                elif row[FLOW_RATE_TO_FROM_SYRINGE] >= 2.5:
+                    puff_inj = 1
+                elif row[FLOW_RATE_TO_FROM_SYRINGE] <= 2:
+                    puff_inj = 2
+                if round(row[FLOW_RATE_TO_FROM_SYRINGE], 2) != 0 and round(row[FLOW_RATE_TO_PATIENT], 2) != 0:
+                    if row[IS_AN_INJECTION] == 1 and row[PERCENT_CONTRAST_SAVED] == 0 and puff_inj == 1:
+                        dyevert_not_used_inj += 1
+                        vol_not_used_inj += row[CONTRAST_VOLUME_TO_PATIENT]
+                    elif row[IS_AN_INJECTION] == 1 and puff_inj == 1:
+                        dyevert_used_inj += 1
+                        vol_used_inj += row[CONTRAST_VOLUME_TO_PATIENT]
+                    elif row[IS_AN_INJECTION] == 1 and row[PERCENT_CONTRAST_SAVED] == 0 and puff_inj == 2:
+                        dyevert_not_used_puff += 1
+                        vol_not_used_puff += row[CONTRAST_VOLUME_TO_PATIENT]
+                    elif row[IS_AN_INJECTION] == 1 and puff_inj == 2:
+                        dyevert_used_puff += 1
+                        vol_used_puff += row[CONTRAST_VOLUME_TO_PATIENT]
+
+        uses[case_number] = ([dyevert_not_used_inj, dyevert_used_inj, dyevert_not_used_puff, dyevert_used_puff])
+
+        return uses
 
 
 def excel_flag_write(file_names, cmsws):
@@ -198,11 +262,17 @@ def excel_flag_write(file_names, cmsws):
             if cases[row][20] == 'PM':
                 data_sheet.cell(row=row + 2, column=col + 1, value=cases[row][col]).fill = PatternFill(
                     fill_type='solid', start_color=YELLOW, end_color=YELLOW)
+                print("PM")
             elif float(cases[row][6]) <= 5.:
                 data_sheet.cell(row=row + 2, column=col + 1, value=cases[row][col]).fill = PatternFill(
                     fill_type='solid', start_color=YELLOW, end_color=YELLOW)
+                print("Duration < 5 min")
             elif cases[row][8] == 0 and cases[row][9] == 0 and cases[row][10] == 0 \
                     and cases[row][11] == 0:
+                data_sheet.cell(row=row + 2, column=col + 1, value=cases[row][col]).fill = PatternFill(
+                    fill_type='solid', start_color=YELLOW, end_color=YELLOW)
+                print("No divert use")
+            elif cases[row][9] <=5:
                 data_sheet.cell(row=row + 2, column=col + 1, value=cases[row][col]).fill = PatternFill(
                     fill_type='solid', start_color=YELLOW, end_color=YELLOW)
             else:
@@ -237,22 +307,22 @@ def excel_destructive_write(file_names, cmsws):
     cases = list_builder(file_names)
     remove_cases = []
     print('Removing cases')
-    for case in cases:
+    for case in cases[0]:
         if case[6] <= 5. or int(case[8]) == int(case[9]) == int(case[10]) == int(case[11]) == 0 or case[20] == 0 \
                 or case[20] == 'PM':
             remove_cases.append(case)
 
     for case in remove_cases:
-        cases.remove(case)
+        cases[0].remove(case)
 
     xlsx_name = str(cmsws) + 'DyeMinishFilteredOutput.xlsx'
     wb = openpyxl.load_workbook('Dyeminish-template.xlsx')
     data_sheet = wb.active
     data_sheet.title = 'Sheet1'
     print('Writing cleaned DyeMinish data')
-    for row in range(len(cases)):
-        for col in range(len(cases[row]) - 1):
-            data_sheet.cell(row=row + 2, column=col + 1, value=cases[row][col])
+    for row in range(len(cases[0])):
+        for col in range(len(cases[0][row]) - 1):
+            data_sheet.cell(row=row + 2, column=col + 1, value=cases[0][row][col])
             data_sheet.cell(row=row + 2, column=col + 1).alignment = Alignment(wrapText=True)
 
     wb.save(xlsx_name)
