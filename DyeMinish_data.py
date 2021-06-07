@@ -122,7 +122,6 @@ def would_be_saved(file_name):
 def list_builder(file_names):
     """Takes the list of files and builds the list of lists to write"""
     DyeMinishCases = []
-    #PuffInjCases = []
 
     for file_name in file_names:
         con = sqlite.connect(file_name)
@@ -147,12 +146,12 @@ def list_builder(file_names):
                 print(row[2], row[END_TIME])
                 if row[2] == '2.1.21' or row[2] == '2.1.24' or row[2] == '2.0.1981' or row[2] == '2.0.2013':
                     DyeMinishCases.append(('', '', '', row[DATE_OF_PROCEDURE][0:10], row[CASE_ID][-12:-4], '',
-                                  row[TOTAL_DURATION], row[THRESHOLD_VOLUME], row[ATTEMPTED_CONTRAST_INJECTION_VOLUME],
-                                  row[DIVERTED_CONTRAST_VOLUME], row[CUMULATIVE_VOLUME_TO_PATIENT],
-                                  row[PERCENTAGE_CONTRAST_DIVERTED], perc_threshold,
-                                  '', to_patient[row[CMSW_CASE_ID] - 1][0], '', '',
-                                  what_if[row[CMSW_CASE_ID] - 1][0], what_if[row[CMSW_CASE_ID] - 1][1],
-                                  row[SERIAL_NUMBER], pmdv))
+                                          row[TOTAL_DURATION], row[THRESHOLD_VOLUME],
+                                          row[ATTEMPTED_CONTRAST_INJECTION_VOLUME], row[DIVERTED_CONTRAST_VOLUME],
+                                          row[CUMULATIVE_VOLUME_TO_PATIENT],  row[PERCENTAGE_CONTRAST_DIVERTED],
+                                          perc_threshold, '', to_patient[row[CMSW_CASE_ID] - 1][0], '', '',
+                                          what_if[row[CMSW_CASE_ID] - 1][0], what_if[row[CMSW_CASE_ID] - 1][1],
+                                          row[SERIAL_NUMBER], pmdv))
                 else:
                     # put end time into datetime object.
                     if row[2] == '2.2.44':
@@ -177,69 +176,74 @@ def list_builder(file_names):
     return DyeMinishCases
 
 
-def dyevert_uses(file_name):
+def dyevert_uses(file_names):
     """Connects to an individual database to calculate the volume of contrast injected
     and the number of times contrast was injected both in puffs and injections
     Volume data is currently unused
     """
-    con = sqlite.connect(file_name)
-    dyevert_used_inj = 0
-    dyevert_not_used_inj = 0
-    dyevert_used_puff = 0
-    dyevert_not_used_puff = 0
-    vol_used_inj = 0
-    vol_not_used_inj = 0
-    vol_used_puff = 0
-    vol_not_used_puff = 0
-    case_number = 0
     uses = []
+    line = 0
+    offset = 0
+    for file_name in file_names:
+        offset = len(uses)
+        line = 0
+        con = sqlite.connect(file_name)
+        dyevert_used_inj = 0
+        dyevert_not_used_inj = 0
+        dyevert_used_puff = 0
+        dyevert_not_used_puff = 0
+        vol_used_inj = 0
+        vol_not_used_inj = 0
+        vol_used_puff = 0
+        vol_not_used_puff = 0
 
-    with con:
+        with con:
 
-        cur = con.cursor()
-        cur.execute('SELECT * FROM CMSWInjections')
-        rows = cur.fetchall()
+            cur = con.cursor()
+            cur.execute('SELECT * FROM CMSWInjections')
+            rows = cur.fetchall()
 
-        for ph in range(rows[-1][1] + 1):
-            uses.append([0, 0, 0, 0])
-        for row in rows:
-            if row[CASE_ID] != case_number:
-                uses[case_number] = ([dyevert_not_used_inj, dyevert_used_inj, dyevert_not_used_puff, dyevert_used_puff])
-                dyevert_used_inj = 0
-                dyevert_not_used_inj = 0
-                dyevert_used_puff = 0
-                dyevert_not_used_puff = 0
-                vol_used_inj = 0
-                vol_not_used_inj = 0
-                vol_used_puff = 0
-                vol_not_used_puff = 0
-                case_number = row[1]
-            if row[CASE_ID] == case_number:
-                if row[CONTRAST_VOLUME_TO_PATIENT] + row[DYEVERT_CONTRAST_VOLUME_DIVERTED] >= 3:
-                    puff_inj = 1
-                elif row[CONTRAST_VOLUME_TO_PATIENT] + row[DYEVERT_CONTRAST_VOLUME_DIVERTED] <= 2:
-                    puff_inj = 2
-                elif row[FLOW_RATE_TO_FROM_SYRINGE] >= 2.5:
-                    puff_inj = 1
-                elif row[FLOW_RATE_TO_FROM_SYRINGE] <= 2:
-                    puff_inj = 2
-                if round(row[FLOW_RATE_TO_FROM_SYRINGE], 2) != 0 and round(row[FLOW_RATE_TO_PATIENT], 2) != 0:
-                    if row[IS_AN_INJECTION] == 1 and row[PERCENT_CONTRAST_SAVED] == 0 and puff_inj == 1:
-                        dyevert_not_used_inj += 1
-                        vol_not_used_inj += row[CONTRAST_VOLUME_TO_PATIENT]
-                    elif row[IS_AN_INJECTION] == 1 and puff_inj == 1:
-                        dyevert_used_inj += 1
-                        vol_used_inj += row[CONTRAST_VOLUME_TO_PATIENT]
-                    elif row[IS_AN_INJECTION] == 1 and row[PERCENT_CONTRAST_SAVED] == 0 and puff_inj == 2:
-                        dyevert_not_used_puff += 1
-                        vol_not_used_puff += row[CONTRAST_VOLUME_TO_PATIENT]
-                    elif row[IS_AN_INJECTION] == 1 and puff_inj == 2:
-                        dyevert_used_puff += 1
-                        vol_used_puff += row[CONTRAST_VOLUME_TO_PATIENT]
+            for ph in range(rows[-1][1] + 1):
+                uses.append([0, 0, 0, 0])
+            for row in rows:
+                if row[CASE_ID] != line:
+                    uses[line+offset] = ([dyevert_not_used_inj, dyevert_used_inj,
+                                          dyevert_not_used_puff, dyevert_used_puff])
+                    dyevert_used_inj = 0
+                    dyevert_not_used_inj = 0
+                    dyevert_used_puff = 0
+                    dyevert_not_used_puff = 0
+                    vol_used_inj = 0
+                    vol_not_used_inj = 0
+                    vol_used_puff = 0
+                    vol_not_used_puff = 0
+                    line = row[1]
+                if row[CASE_ID] == line:
+                    if row[CONTRAST_VOLUME_TO_PATIENT] + row[DYEVERT_CONTRAST_VOLUME_DIVERTED] >= 3:
+                        puff_inj = 1
+                    elif row[CONTRAST_VOLUME_TO_PATIENT] + row[DYEVERT_CONTRAST_VOLUME_DIVERTED] <= 2:
+                        puff_inj = 2
+                    elif row[FLOW_RATE_TO_FROM_SYRINGE] >= 2.5:
+                        puff_inj = 1
+                    elif row[FLOW_RATE_TO_FROM_SYRINGE] <= 2:
+                        puff_inj = 2
+                    if round(row[FLOW_RATE_TO_FROM_SYRINGE], 2) != 0 and round(row[FLOW_RATE_TO_PATIENT], 2) != 0:
+                        if row[IS_AN_INJECTION] == 1 and row[PERCENT_CONTRAST_SAVED] == 0 and puff_inj == 1:
+                            dyevert_not_used_inj += 1
+                            vol_not_used_inj += row[CONTRAST_VOLUME_TO_PATIENT]
+                        elif row[IS_AN_INJECTION] == 1 and puff_inj == 1:
+                            dyevert_used_inj += 1
+                            vol_used_inj += row[CONTRAST_VOLUME_TO_PATIENT]
+                        elif row[IS_AN_INJECTION] == 1 and row[PERCENT_CONTRAST_SAVED] == 0 and puff_inj == 2:
+                            dyevert_not_used_puff += 1
+                            vol_not_used_puff += row[CONTRAST_VOLUME_TO_PATIENT]
+                        elif row[IS_AN_INJECTION] == 1 and puff_inj == 2:
+                            dyevert_used_puff += 1
+                            vol_used_puff += row[CONTRAST_VOLUME_TO_PATIENT]
 
-        uses[case_number] = ([dyevert_not_used_inj, dyevert_used_inj, dyevert_not_used_puff, dyevert_used_puff])
+            uses[line+offset] = ([dyevert_not_used_inj, dyevert_used_inj, dyevert_not_used_puff, dyevert_used_puff])
 
-        return uses
+    return uses
 
 
 def excel_flag_write(file_names, cmsws):
@@ -252,6 +256,7 @@ def excel_flag_write(file_names, cmsws):
     """
     print('Processing DyeMinish data with flagging')
     cases = list_builder(file_names)
+    dvuses = dyevert_uses(file_names)
     xlsx_name = str(cmsws) + 'DyeMinishFlaggedOutput.xlsx'
     wb = openpyxl.load_workbook('Dyeminish-template.xlsx')
     data_sheet = wb.active
@@ -272,7 +277,7 @@ def excel_flag_write(file_names, cmsws):
                 data_sheet.cell(row=row + 2, column=col + 1, value=cases[row][col]).fill = PatternFill(
                     fill_type='solid', start_color=YELLOW, end_color=YELLOW)
                 print("No divert use")
-            elif cases[row][9] <=5:
+            elif cases[row][9] <= 5:
                 data_sheet.cell(row=row + 2, column=col + 1, value=cases[row][col]).fill = PatternFill(
                     fill_type='solid', start_color=YELLOW, end_color=YELLOW)
             else:
@@ -289,6 +294,10 @@ def excel_flag_write(file_names, cmsws):
             data_sheet.cell(row=row + 2, column=16, value='No contrast was injected')
             data_sheet.cell(row=row + 2, column=14, value='No')
         # write the case type (pmdv) into column 36
+        data_sheet.cell(row=row + 2, column=30, value=dvuses[row+1][1])
+        data_sheet.cell(row=row + 2, column=31, value=dvuses[row+1][3])
+        data_sheet.cell(row=row + 2, column=32, value=dvuses[row+1][0])
+        data_sheet.cell(row=row + 2, column=33, value=dvuses[row+1][2])
         data_sheet.cell(row=row + 2, column=36, value=cases[row][20])
 
     wb.save(xlsx_name)
@@ -308,8 +317,8 @@ def excel_destructive_write(file_names, cmsws):
     remove_cases = []
     print('Removing cases')
     for case in cases[0]:
-        if case[6] <= 5. or int(case[8]) == int(case[9]) == int(case[10]) == int(case[11]) == 0 or case[20] == 0 \
-                or case[20] == 'PM':
+        if float(case[6]) <= 5. or int(case[8]) == int(case[9]) == int(case[10]) == int(case[11]) == 0 or \
+                case[20] == 0 or case[20] == 'PM':
             remove_cases.append(case)
 
     for case in remove_cases:
