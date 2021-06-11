@@ -149,7 +149,7 @@ class Application(tk.Frame):
             rods_rockin_data.excel_write(file_names, cmsws)
             sales_data.write(file_names, cmsws)
             DyeMinish_data.excel_flag_write(file_names, cmsws)
-            DyeMinish_data.excel_destructive_write(file_names, cmsws)
+            # DyeMinish_data.excel_destructive_write(file_names, cmsws)
         except Exception:
             logging.exception('Unexpected issue')
         print('Done')

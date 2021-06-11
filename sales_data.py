@@ -53,7 +53,7 @@ def list_builder(file_names):
             rows = cur.fetchall()
             global TOTAL_DURATION
             if not rows == []:
-                if rows[0][2] == '2.1.56' or rows[0][2] == '2.1.24':
+                if rows[0][2] == '2.1.56' or rows[0][2] == '2.1.24' or rows[0][2] == '2.1.67':
                     TOTAL_DURATION = 19
                 else:
                     TOTAL_DURATION = 20
@@ -157,8 +157,9 @@ def write(file_names, cmsw):
             colors[2] += 1
         elif case[0] == LIGHT_GREEN:
             colors[3] += 1
-        attempted += case[4]
-        diverted += case[6]
+        if not case[4] == '':
+            attempted += float(case[4])
+            diverted += float(case[6])
 
     percent_saved = round(diverted/attempted*100)
     prs = Presentation('Slide-Template.pptx')

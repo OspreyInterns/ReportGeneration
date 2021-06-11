@@ -19,18 +19,18 @@ CUMULATIVE_VOLUME_TO_PATIENT = 15
 PERCENTAGE_CONTRAST_DIVERTED = 16
 DYEVERTEZ = 23
 #
-# Use these for iPad
+# # Use these for iPad
 # TOTAL_DURATION = 20
 # END_TIME = 19
-# (from injection table)
+# # (from injection table)
 # IS_AN_INJECTION = 8
 # LINEAR_DYEVERT_MOVEMENT = 18
 # DYEVERT_CONTRAST_VOLUME_DIVERTED = 20
 # PERCENT_CONTRAST_SAVED = 21
 # CONTRAST_VOLUME_TO_PATIENT = 23
 # PREDOMINANT_CONTRAST_LINE_PRESSURE = 34
-# #
-#
+
+
 # Use these for CMSW
 TOTAL_DURATION = 19
 END_TIME = 20
@@ -129,6 +129,28 @@ def list_builder(file_names):
             cur = con.cursor()
             cur.execute('SELECT * FROM CMSWCases')
             rows = cur.fetchall()
+        global TOTAL_DURATION, END_TIME, IS_AN_INJECTION, LINEAR_DYEVERT_MOVEMENT, DYEVERT_CONTRAST_VOLUME_DIVERTED, \
+            DYEVERT_CONTRAST_VOLUME_DIVERTED, PERCENT_CONTRAST_SAVED, CONTRAST_VOLUME_TO_PATIENT, \
+            PREDOMINANT_CONTRAST_LINE_PRESSURE
+        if not rows == []:
+            if rows[0][2] == '2.1.56' or rows[0][2] == '2.1.24' or rows[0][2] == '2.1.67':
+                TOTAL_DURATION = 19
+                END_TIME = 20
+                IS_AN_INJECTION = 5
+                LINEAR_DYEVERT_MOVEMENT = 15
+                DYEVERT_CONTRAST_VOLUME_DIVERTED = 17
+                PERCENT_CONTRAST_SAVED = 18
+                CONTRAST_VOLUME_TO_PATIENT = 20
+                PREDOMINANT_CONTRAST_LINE_PRESSURE = 30
+            else:
+                TOTAL_DURATION = 20
+                END_TIME = 19
+                IS_AN_INJECTION = 8
+                LINEAR_DYEVERT_MOVEMENT = 18
+                DYEVERT_CONTRAST_VOLUME_DIVERTED = 20
+                PERCENT_CONTRAST_SAVED = 21
+                CONTRAST_VOLUME_TO_PATIENT = 23
+                PREDOMINANT_CONTRAST_LINE_PRESSURE = 34
             what_if = would_be_saved(file_name)
             to_patient = straight_to_patient(file_name)
             for row in rows:
@@ -203,8 +225,9 @@ def dyevert_uses(file_names):
             cur.execute('SELECT * FROM CMSWInjections')
             rows = cur.fetchall()
 
-            for ph in range(rows[-1][1] + 1):
-                uses.append([0, 0, 0, 0])
+            if not rows == []:
+                for ph in range(rows[-1][1] + 1):
+                    uses.append([0, 0, 0, 0])
             for row in rows:
                 if row[CASE_ID] != line:
                     uses[line+offset] = ([dyevert_not_used_inj, dyevert_used_inj,
@@ -241,7 +264,8 @@ def dyevert_uses(file_names):
                             dyevert_used_puff += 1
                             vol_used_puff += row[CONTRAST_VOLUME_TO_PATIENT]
 
-            uses[line+offset] = ([dyevert_not_used_inj, dyevert_used_inj, dyevert_not_used_puff, dyevert_used_puff])
+            if not dyevert_not_used_inj == dyevert_used_inj == dyevert_not_used_puff == dyevert_used_puff == 0:
+                uses[line+offset] = ([dyevert_not_used_inj, dyevert_used_inj, dyevert_not_used_puff, dyevert_used_puff])
 
     return uses
 
