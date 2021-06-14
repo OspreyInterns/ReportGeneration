@@ -555,7 +555,9 @@ def excel_write(file_names, cmsw):
         -The summary table, which as an augmented sales table
         -The in depth table, which details every injection from the databases
     """
-    print('Processing Rod\'s summary data')
+    print('Processing Rod\'s injection data')
+    injection_table(file_names, cmsw)
+    print('Unjection data written, processing summary data')
     cases = list_builder(file_names)
     xlsx1_name = str(cmsw) + 'rods-case-data.xlsx'
     wb = openpyxl.load_workbook('Rods-Template.xlsx')
@@ -569,6 +571,4 @@ def excel_write(file_names, cmsw):
 
     data_sheet.column_dimensions['A'].hidden = True
     wb.save(xlsx1_name)
-    print('Summary data written, processing injection data')
-    injection_table(file_names, cmsw)
     print('Rod\'s report finished')

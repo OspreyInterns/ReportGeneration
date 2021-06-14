@@ -66,12 +66,16 @@ def list_builder(file_names):
                         print(debug_msg)
                     comment = ''
                     if int(row[TOTAL_DURATION]) <= 5:
-                        comment = 'Duration < 5 min'
+                        comment = 'Case duration < 5 mins'
                     if row[DIVERTED_CONTRAST_VOLUME] < 5.:
-                        comment = '< 5mL Diverted'
+                        comment = 'Diverted Vol < 5 mL'
                     if row[ATTEMPTED_CONTRAST_INJECTION_VOLUME] == row[DIVERTED_CONTRAST_VOLUME] == \
                             row[CUMULATIVE_VOLUME_TO_PATIENT] == row[PERCENTAGE_CONTRAST_DIVERTED] == 0:
-                        comment = 'No contrast injected'
+                        comment = '0 mL contrast injected'
+                    if row[DYEVERT_USED] == 0:
+                        comment = 'DyeTect cases'
+                    if row[ATTEMPTED_CONTRAST_INJECTION_VOLUME] <= 20.:
+                        comment = 'Attempted Vol < 20 mL'
                     if row[CUMULATIVE_VOLUME_TO_PATIENT] <= row[THRESHOLD_VOLUME] \
                             / 3 <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
                         color = LIGHT_GREEN
@@ -106,39 +110,47 @@ def write(file_names, cmsw):
     """
     print('Processing data for sales report')
     cases = list_builder(file_names)
-    cases.append((0, '', '', '', '', '', '', '', '', ''))
-    cases.append((0, 'Excluded cases', '', '', '', '', '', '', '', ''))
+    cases.append(('', '', '', '', '', '', '', '', '', ''))
+    cases.append(('', 'Excluded cases', '', '', '', '', '', '', '', ''))
     xlsx_name = str(cmsw) + '-data-tables.xlsx'
     wb = openpyxl.load_workbook('Sales-Template.xlsx')
     data_sheet = wb.active
     data_sheet.title = 'Sheet1'
     print('Data ready, writing sales report')
     line = 17
+    total_attempted = 0
+    total_to_patient = 0
+    total_diverted = 0
     for row in range(len(cases)):
         if cases[row][8] == '':
+            if not cases[row][4] == '':
+                total_attempted += float(cases[row][4])
+                total_to_patient += float(cases[row][5])
+                total_diverted += float(cases[row][6])
             for col in range(len(cases[row])):
                 data_sheet.cell(row=line, column=col + 1, value=cases[row][col])
                 data_sheet.cell(row=line, column=col + 1).alignment = Alignment(wrapText=True)
                 if row == len(cases)-1:
                     data_sheet.cell(row=line, column=2).font = Font(bold=True)
             line += 1
-    exclusions = ['Exclusion Criteria', 'Case less than 5 min', '<5 mL diverted', 'No contrast used']
-    iterations = 0
+    data_sheet.cell(row=6, column=5, value=total_attempted)
+    data_sheet.cell(row=6, column=5).alignment = Alignment(wrapText=True)
+    data_sheet.cell(row=6, column=6, value=total_to_patient)
+    data_sheet.cell(row=6, column=6).alignment = Alignment(wrapText=True)
+    data_sheet.cell(row=6, column=7, value=total_diverted)
+    data_sheet.cell(row=6, column=7).alignment = Alignment(wrapText=True)
+    exclusions = ['Exclusion criteria include', '1. Case duration < 5 mins', '2. 0 mL contrast injected',
+                  '3. DyeTect cases', '4. Diverted Vol < 5 mL', '5. Attempted Vol < 20 mL']
+    cases.append(('', '', '', '', '', '', '', '', '   ', ''))
+    for exclusion in exclusions:
+        cases.append(('', '', '', '', '', '', '', '', exclusion, ''))
     for row in range(len(cases)):
         if not cases[row][8] == '':
             for col in range(len(cases[row])):
                 data_sheet.cell(row=line, column=col + 1, value=cases[row][col])
                 data_sheet.cell(row=line, column=col + 1).alignment = Alignment(wrapText=True)
-            if iterations < len(exclusions):
-                data_sheet.cell(row=line, column=10, value=exclusions[iterations])
-                data_sheet.cell(row=line, column=10).alignment = Alignment(wrapText=True)
-                iterations += 1
-            line += 1
-    if iterations < len(exclusions):
-        while iterations < len(exclusions):
-            data_sheet.cell(row=line, column=10, value=exclusions[iterations])
-            data_sheet.cell(row=line, column=10).alignment = Alignment(wrapText=True)
-            iterations += 1
+            data_sheet.cell(row=line, column=1, value='')
+            data_sheet.cell(row=line, column=1).alignment = Alignment(wrapText=True)
             line += 1
     data_sheet.column_dimensions['A'].hidden = True
     wb.save(xlsx_name)

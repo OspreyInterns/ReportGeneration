@@ -5,7 +5,6 @@ from openpyxl.styles import Alignment, PatternFill
 import datetime
 
 # case column numbers
-from rods_rockin_data import FLOW_RATE_TO_FROM_SYRINGE, FLOW_RATE_TO_PATIENT
 
 CMSW_CASE_ID = 0
 CASE_ID = 1
@@ -18,6 +17,8 @@ DIVERTED_CONTRAST_VOLUME = 14
 CUMULATIVE_VOLUME_TO_PATIENT = 15
 PERCENTAGE_CONTRAST_DIVERTED = 16
 DYEVERTEZ = 23
+FLOW_RATE_TO_FROM_SYRINGE = 28
+FLOW_RATE_TO_PATIENT = 29
 #
 # # Use these for iPad
 # TOTAL_DURATION = 20
@@ -131,7 +132,7 @@ def list_builder(file_names):
             rows = cur.fetchall()
         global TOTAL_DURATION, END_TIME, IS_AN_INJECTION, LINEAR_DYEVERT_MOVEMENT, DYEVERT_CONTRAST_VOLUME_DIVERTED, \
             DYEVERT_CONTRAST_VOLUME_DIVERTED, PERCENT_CONTRAST_SAVED, CONTRAST_VOLUME_TO_PATIENT, \
-            PREDOMINANT_CONTRAST_LINE_PRESSURE
+            PREDOMINANT_CONTRAST_LINE_PRESSURE, FLOW_RATE_TO_FROM_SYRINGE, FLOW_RATE_TO_PATIENT
         if not rows == []:
             if rows[0][2] == '2.1.56' or rows[0][2] == '2.1.24' or rows[0][2] == '2.1.67':
                 TOTAL_DURATION = 19
@@ -141,6 +142,8 @@ def list_builder(file_names):
                 DYEVERT_CONTRAST_VOLUME_DIVERTED = 17
                 PERCENT_CONTRAST_SAVED = 18
                 CONTRAST_VOLUME_TO_PATIENT = 20
+                FLOW_RATE_TO_FROM_SYRINGE = 28
+                FLOW_RATE_TO_PATIENT = 29
                 PREDOMINANT_CONTRAST_LINE_PRESSURE = 30
             else:
                 TOTAL_DURATION = 20
@@ -150,6 +153,8 @@ def list_builder(file_names):
                 DYEVERT_CONTRAST_VOLUME_DIVERTED = 20
                 PERCENT_CONTRAST_SAVED = 21
                 CONTRAST_VOLUME_TO_PATIENT = 23
+                FLOW_RATE_TO_FROM_SYRINGE = 32
+                FLOW_RATE_TO_PATIENT = 33
                 PREDOMINANT_CONTRAST_LINE_PRESSURE = 34
             what_if = would_be_saved(file_name)
             to_patient = straight_to_patient(file_name)
@@ -323,6 +328,13 @@ def excel_flag_write(file_names, cmsws):
         data_sheet.cell(row=row + 2, column=32, value=dvuses[row+1][0])
         data_sheet.cell(row=row + 2, column=33, value=dvuses[row+1][2])
         data_sheet.cell(row=row + 2, column=36, value=cases[row][20])
+
+    data_sheet.cell(row=1, column=37, value='Puff/Inj Criteria')
+    data_sheet.cell(row=2, column=37, value='> 3 mL Injected: Inj')
+    data_sheet.cell(row=3, column=37, value='< 2 mL Injected: Puff')
+    data_sheet.cell(row=4, column=37, value='> 2.5 mL/s: Inj')
+    data_sheet.cell(row=5, column=37, value='< 2 mL mL/s: Puff')
+    data_sheet.cell(row=6, column=37, value='Remaining: Unmarked')
 
     wb.save(xlsx_name)
     print('DyeMinish report with flagged data finished')
