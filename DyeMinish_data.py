@@ -271,7 +271,7 @@ def dyevert_uses(file_names):
 
             if not dyevert_not_used_inj == dyevert_used_inj == dyevert_not_used_puff == dyevert_used_puff == 0:
                 uses[line+offset] = ([dyevert_not_used_inj, dyevert_used_inj, dyevert_not_used_puff, dyevert_used_puff])
-
+    uses = uses[1:]
     return uses
 
 
@@ -324,17 +324,11 @@ def excel_flag_write(file_names, cmsws):
             data_sheet.cell(row=row + 2, column=14, value='No')
         # write the case type (pmdv) into column 36
         data_sheet.cell(row=row + 2, column=30, value=dvuses[row+1][1])
-        data_sheet.cell(row=row + 2, column=31, value=dvuses[row+1][3])
-        data_sheet.cell(row=row + 2, column=32, value=dvuses[row+1][0])
+        data_sheet.cell(row=row + 2, column=31, value=dvuses[row+1][0])
+        data_sheet.cell(row=row + 2, column=32, value=dvuses[row+1][3])
         data_sheet.cell(row=row + 2, column=33, value=dvuses[row+1][2])
         data_sheet.cell(row=row + 2, column=36, value=cases[row][20])
 
-    data_sheet.cell(row=1, column=37, value='Puff/Inj Criteria')
-    data_sheet.cell(row=2, column=37, value='> 3 mL Injected: Inj')
-    data_sheet.cell(row=3, column=37, value='< 2 mL Injected: Puff')
-    data_sheet.cell(row=4, column=37, value='> 2.5 mL/s: Inj')
-    data_sheet.cell(row=5, column=37, value='< 2 mL mL/s: Puff')
-    data_sheet.cell(row=6, column=37, value='Remaining: Unmarked')
 
     wb.save(xlsx_name)
     print('DyeMinish report with flagged data finished')

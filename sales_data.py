@@ -111,7 +111,7 @@ def write(file_names, cmsw):
     print('Processing data for sales report')
     cases = list_builder(file_names)
     cases.append(('', '', '', '', '', '', '', '', '', ''))
-    cases.append(('', 'Excluded cases', '', '', '', '', '', '', '', ''))
+    cases.append(('', '', 'Excluded Cases', '', '', '', '', '', '', ''))
     xlsx_name = str(cmsw) + '-data-tables.xlsx'
     wb = openpyxl.load_workbook('Sales-Template.xlsx')
     data_sheet = wb.active
@@ -133,6 +133,8 @@ def write(file_names, cmsw):
                 if row == len(cases)-1:
                     data_sheet.cell(row=line, column=2).font = Font(bold=True)
             line += 1
+    data_sheet.cell(row=line-1, column=3).alignment = Alignment(wrapText=False)
+    data_sheet.cell(row=line-1, column=3).font = Font(bold=True, size=16)
     data_sheet.cell(row=6, column=5, value=total_attempted)
     data_sheet.cell(row=6, column=5).alignment = Alignment(wrapText=True)
     data_sheet.cell(row=6, column=6, value=total_to_patient)
