@@ -134,6 +134,7 @@ def list_builder(file_names):
             DYEVERT_CONTRAST_VOLUME_DIVERTED, PERCENT_CONTRAST_SAVED, CONTRAST_VOLUME_TO_PATIENT, \
             PREDOMINANT_CONTRAST_LINE_PRESSURE, FLOW_RATE_TO_FROM_SYRINGE, FLOW_RATE_TO_PATIENT
         if not rows == []:
+            ver = rows[0][2]
             if rows[0][2] == '2.1.56' or rows[0][2] == '2.1.24' or rows[0][2] == '2.1.67':
                 TOTAL_DURATION = 19
                 END_TIME = 20
@@ -210,33 +211,65 @@ def dyevert_uses(file_names):
     """
     uses = []
     line = 0
-    offset = 0
+    dyevert_used_inj = 0
+    dyevert_not_used_inj = 0
+    dyevert_used_puff = 0
+    dyevert_not_used_puff = 0
+    vol_used_inj = 0
+    vol_not_used_inj = 0
+    vol_used_puff = 0
+    vol_not_used_puff = 0
     for file_name in file_names:
-        offset = len(uses)
         line = 0
         con = sqlite.connect(file_name)
-        dyevert_used_inj = 0
-        dyevert_not_used_inj = 0
-        dyevert_used_puff = 0
-        dyevert_not_used_puff = 0
-        vol_used_inj = 0
-        vol_not_used_inj = 0
-        vol_used_puff = 0
-        vol_not_used_puff = 0
-
+        with con:
+            cur = con.cursor()
+            cur.execute('SELECT * FROM CMSWCases')
+            rows = cur.fetchall()
+        global TOTAL_DURATION, END_TIME, IS_AN_INJECTION, LINEAR_DYEVERT_MOVEMENT, DYEVERT_CONTRAST_VOLUME_DIVERTED, \
+            DYEVERT_CONTRAST_VOLUME_DIVERTED, PERCENT_CONTRAST_SAVED, CONTRAST_VOLUME_TO_PATIENT, \
+            PREDOMINANT_CONTRAST_LINE_PRESSURE, FLOW_RATE_TO_FROM_SYRINGE, FLOW_RATE_TO_PATIENT
+        if not rows == []:
+            ver = rows[0][2]
+            if rows[0][2] == '2.1.56' or rows[0][2] == '2.1.24' or rows[0][2] == '2.1.67':
+                TOTAL_DURATION = 19
+                END_TIME = 20
+                IS_AN_INJECTION = 5
+                LINEAR_DYEVERT_MOVEMENT = 15
+                DYEVERT_CONTRAST_VOLUME_DIVERTED = 17
+                PERCENT_CONTRAST_SAVED = 18
+                CONTRAST_VOLUME_TO_PATIENT = 20
+                FLOW_RATE_TO_FROM_SYRINGE = 28
+                FLOW_RATE_TO_PATIENT = 29
+                PREDOMINANT_CONTRAST_LINE_PRESSURE = 30
+            else:
+                TOTAL_DURATION = 20
+                END_TIME = 19
+                IS_AN_INJECTION = 8
+                LINEAR_DYEVERT_MOVEMENT = 18
+                DYEVERT_CONTRAST_VOLUME_DIVERTED = 20
+                PERCENT_CONTRAST_SAVED = 21
+                CONTRAST_VOLUME_TO_PATIENT = 23
+                FLOW_RATE_TO_FROM_SYRINGE = 32
+                FLOW_RATE_TO_PATIENT = 33
+                PREDOMINANT_CONTRAST_LINE_PRESSURE = 34
         with con:
 
             cur = con.cursor()
             cur.execute('SELECT * FROM CMSWInjections')
             rows = cur.fetchall()
 
-            if not rows == []:
-                for ph in range(rows[-1][1] + 1):
-                    uses.append([0, 0, 0, 0])
+            # if not rows == []:
+                # for ph in range(rows[-1][1] + 1):
+                #    uses.append([0, 0, 0, 0])
             for row in rows:
                 if row[CASE_ID] != line:
-                    uses[line+offset] = ([dyevert_not_used_inj, dyevert_used_inj,
-                                          dyevert_not_used_puff, dyevert_used_puff])
+                    if row[CASE_ID] != line + 1 and row[CASE_ID] > line:
+                        while line < row[CASE_ID] - 1:
+                            uses.append([0, 0, 0, 0])
+                            line += 1
+                    uses.append([dyevert_not_used_inj, dyevert_used_inj, dyevert_not_used_puff,
+                                dyevert_used_puff])
                     dyevert_used_inj = 0
                     dyevert_not_used_inj = 0
                     dyevert_used_puff = 0
@@ -245,7 +278,7 @@ def dyevert_uses(file_names):
                     vol_not_used_inj = 0
                     vol_used_puff = 0
                     vol_not_used_puff = 0
-                    line = row[1]
+                    line += 1
                 if row[CASE_ID] == line:
                     if row[CONTRAST_VOLUME_TO_PATIENT] + row[DYEVERT_CONTRAST_VOLUME_DIVERTED] >= 3:
                         puff_inj = 1
@@ -256,6 +289,8 @@ def dyevert_uses(file_names):
                     elif row[FLOW_RATE_TO_FROM_SYRINGE] <= 2:
                         puff_inj = 2
                     if round(row[FLOW_RATE_TO_FROM_SYRINGE], 2) != 0 and round(row[FLOW_RATE_TO_PATIENT], 2) != 0:
+                        is_inj = row[IS_AN_INJECTION]
+                        perc_saved = row[PERCENT_CONTRAST_SAVED]
                         if row[IS_AN_INJECTION] == 1 and row[PERCENT_CONTRAST_SAVED] == 0 and puff_inj == 1:
                             dyevert_not_used_inj += 1
                             vol_not_used_inj += row[CONTRAST_VOLUME_TO_PATIENT]
@@ -269,8 +304,7 @@ def dyevert_uses(file_names):
                             dyevert_used_puff += 1
                             vol_used_puff += row[CONTRAST_VOLUME_TO_PATIENT]
 
-            if not dyevert_not_used_inj == dyevert_used_inj == dyevert_not_used_puff == dyevert_used_puff == 0:
-                uses[line+offset] = ([dyevert_not_used_inj, dyevert_used_inj, dyevert_not_used_puff, dyevert_used_puff])
+    uses.append([dyevert_not_used_inj, dyevert_used_inj, dyevert_not_used_puff, dyevert_used_puff])
     uses = uses[1:]
     return uses
 
@@ -323,10 +357,10 @@ def excel_flag_write(file_names, cmsws):
             data_sheet.cell(row=row + 2, column=16, value='No contrast was injected')
             data_sheet.cell(row=row + 2, column=14, value='No')
         # write the case type (pmdv) into column 36
-        data_sheet.cell(row=row + 2, column=30, value=dvuses[row+1][1])
-        data_sheet.cell(row=row + 2, column=31, value=dvuses[row+1][0])
-        data_sheet.cell(row=row + 2, column=32, value=dvuses[row+1][3])
-        data_sheet.cell(row=row + 2, column=33, value=dvuses[row+1][2])
+        data_sheet.cell(row=row + 2, column=30, value=dvuses[row-1][1])
+        data_sheet.cell(row=row + 2, column=31, value=dvuses[row-1][0])
+        data_sheet.cell(row=row + 2, column=32, value=dvuses[row-1][3])
+        data_sheet.cell(row=row + 2, column=33, value=dvuses[row-1][2])
         data_sheet.cell(row=row + 2, column=36, value=cases[row][20])
 
 

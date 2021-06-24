@@ -557,7 +557,7 @@ def excel_write(file_names, cmsw):
     """
     print('Processing Rod\'s injection data')
     injection_table(file_names, cmsw)
-    print('Unjection data written, processing summary data')
+    print('Injection data written, processing summary data')
     cases = list_builder(file_names)
     xlsx1_name = str(cmsw) + 'rods-case-data.xlsx'
     wb = openpyxl.load_workbook('Rods-Template.xlsx')
