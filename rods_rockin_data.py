@@ -429,7 +429,7 @@ def injection_table(file_names, cmsw):
     print('Writing injection data', end='')
     for case in range(len(cases)):
         # print('Writing event ',case, 'of ',len(cases))
-        if case % 10 == 0:
+        if case % 100 == 0:
             print('.', end='')
             print('Writing event ', case, 'of ', len(cases))
         data_sheet.append(cases[case])

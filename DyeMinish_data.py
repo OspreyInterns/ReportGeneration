@@ -52,6 +52,18 @@ YELLOW = 'FFFF00'
 
 def straight_to_patient(file_name):
     con = sqlite.connect(file_name)
+    with con:
+
+        missing_summary = []
+        cur = con.cursor()
+        cur.execute('SELECT * FROM CMSWCases')
+        rows = cur.fetchall()
+
+        for row in rows:
+            if row[ATTEMPTED_CONTRAST_INJECTION_VOLUME] == row[DIVERTED_CONTRAST_VOLUME] == \
+                    row[CUMULATIVE_VOLUME_TO_PATIENT] == row[DIVERTED_CONTRAST_VOLUME] == 0:
+                missing_summary.append(row[CASE_ID])
+                logging.warning('Case ' + str(row[CASE_ID]) + ' may be missing summary data')
 
     with con:
 
@@ -64,12 +76,13 @@ def straight_to_patient(file_name):
         for placeholder in range(len(rows)):
             contrast_inj.append([0, 0])
         for row in rows:
-            if row[IS_AN_INJECTION] == 1 and (row[PERCENT_CONTRAST_SAVED] <= 1 or row[LINEAR_DYEVERT_MOVEMENT] <= 20) \
-                    and row[PREDOMINANT_CONTRAST_LINE_PRESSURE] == 0:
-                contrast_inj[row[CASE_ID] - 1][0] += row[CONTRAST_VOLUME_TO_PATIENT]
-            if row[IS_AN_INJECTION] == 1 and (row[DYEVERT_CONTRAST_VOLUME_DIVERTED] == 0
-                                              or row[LINEAR_DYEVERT_MOVEMENT] <= 20):
-                contrast_inj[row[CASE_ID] - 1][1] += row[CONTRAST_VOLUME_TO_PATIENT]
+            if row[CMSW_CASE_ID] not in missing_summary:
+                if row[IS_AN_INJECTION] == 1 and (row[PERCENT_CONTRAST_SAVED] <= 1 or row[LINEAR_DYEVERT_MOVEMENT] <= 20) \
+                        and row[PREDOMINANT_CONTRAST_LINE_PRESSURE] == 0:
+                    contrast_inj[row[CASE_ID] - 1][0] += row[CONTRAST_VOLUME_TO_PATIENT]
+                if row[IS_AN_INJECTION] == 1 and (row[DYEVERT_CONTRAST_VOLUME_DIVERTED] == 0
+                                                  or row[LINEAR_DYEVERT_MOVEMENT] <= 20):
+                    contrast_inj[row[CASE_ID] - 1][1] += row[CONTRAST_VOLUME_TO_PATIENT]
 
         return contrast_inj
 
@@ -172,13 +185,12 @@ def list_builder(file_names):
                     perc_threshold = row[CUMULATIVE_VOLUME_TO_PATIENT] / row[THRESHOLD_VOLUME] * 100
                 print(row[2], row[END_TIME])
                 if row[2] == '2.1.21' or row[2] == '2.1.24' or row[2] == '2.0.1981' or row[2] == '2.0.2013':
-                    DyeMinishCases.append(('', '', '', row[DATE_OF_PROCEDURE][0:10], row[CASE_ID][-12:-4], '',
-                                          row[TOTAL_DURATION], row[THRESHOLD_VOLUME],
-                                          row[ATTEMPTED_CONTRAST_INJECTION_VOLUME], row[DIVERTED_CONTRAST_VOLUME],
-                                          row[CUMULATIVE_VOLUME_TO_PATIENT],  row[PERCENTAGE_CONTRAST_DIVERTED],
-                                          perc_threshold, '', to_patient[row[CMSW_CASE_ID] - 1][0], '', '',
-                                          what_if[row[CMSW_CASE_ID] - 1][0], what_if[row[CMSW_CASE_ID] - 1][1],
-                                          row[SERIAL_NUMBER], pmdv))
+                    DyeMinishCases.append((row[DATE_OF_PROCEDURE][0:10], row[CASE_ID][-12:-4], row[TOTAL_DURATION],
+                                           row[THRESHOLD_VOLUME], row[ATTEMPTED_CONTRAST_INJECTION_VOLUME],
+                                           row[DIVERTED_CONTRAST_VOLUME], row[CUMULATIVE_VOLUME_TO_PATIENT],
+                                           row[PERCENTAGE_CONTRAST_DIVERTED], perc_threshold,
+                                           to_patient[row[CMSW_CASE_ID] - 1][0], what_if[row[CMSW_CASE_ID] - 1][0],
+                                           what_if[row[CMSW_CASE_ID] - 1][1], row[SERIAL_NUMBER], pmdv))
                 else:
                     # put end time into datetime object.
                     if row[2] == '2.2.44':
@@ -191,12 +203,13 @@ def list_builder(file_names):
                         # else this is 2.1.67 system.
                         case_end = datetime.datetime.strptime(row[END_TIME], '%Y-%m-%d %H:%M:%S.%f')
                     print(row[2], case_end.strftime('%H:%M:%S'))
-                    DyeMinishCases.append(('', '', '', row[DATE_OF_PROCEDURE][0:10], row[CASE_ID][-12:-4],
-                                           case_end.strftime('%H:%M:%S'), row[TOTAL_DURATION], row[THRESHOLD_VOLUME],
+                    DyeMinishCases.append((row[DATE_OF_PROCEDURE][0:10], row[CASE_ID][-12:-4],
+                                           # case_end.strftime('%H:%M:%S'),
+                                           row[TOTAL_DURATION], row[THRESHOLD_VOLUME],
                                            # row[END_TIME], row[TOTAL_DURATION], row[THRESHOLD_VOLUME],
                                            row[ATTEMPTED_CONTRAST_INJECTION_VOLUME], row[DIVERTED_CONTRAST_VOLUME],
                                            row[CUMULATIVE_VOLUME_TO_PATIENT], row[PERCENTAGE_CONTRAST_DIVERTED],
-                                           perc_threshold, '', to_patient[row[CMSW_CASE_ID] - 1][0], '', '',
+                                           perc_threshold, to_patient[row[CMSW_CASE_ID] - 1][0],
                                            what_if[row[CMSW_CASE_ID] - 1][0], what_if[row[CMSW_CASE_ID] - 1][1],
                                            row[SERIAL_NUMBER], pmdv))
 
@@ -207,6 +220,7 @@ def dyevert_uses(file_names):
     """Connects to an individual database to calculate the volume of contrast injected
     and the number of times contrast was injected both in puffs and injections
     Volume data is currently unused
+    Also adds tracking for first and last injection times
     """
     uses = []
     dyevert_used_inj = 0
@@ -255,11 +269,12 @@ def dyevert_uses(file_names):
             cur = con.cursor()
             cur.execute('SELECT * FROM CMSWInjections')
             rows = cur.fetchall()
-
+            first_inj = rows[0][2][-12:-7]
+            last_inj = ''
             for row in rows:
                 if row[CASE_ID] != line:
                     uses.append([dyevert_not_used_inj, dyevert_used_inj, dyevert_not_used_puff,
-                                dyevert_used_puff])
+                                dyevert_used_puff, first_inj, last_inj])
                     dyevert_used_inj = 0
                     dyevert_not_used_inj = 0
                     dyevert_used_puff = 0
@@ -268,11 +283,13 @@ def dyevert_uses(file_names):
                     vol_not_used_inj = 0
                     vol_used_puff = 0
                     vol_not_used_puff = 0
+                    first_inj = row[2][-12:-7]
                     line += 1
                     while line < row[CASE_ID] - 1:
-                        uses.append([0, 0, 0, 0])
+                        uses.append([0, 0, 0, 0, '', ''])
                         line += 1
                 if row[CASE_ID] == line:
+                    last_inj = row[2][-12:-7]
                     if row[CONTRAST_VOLUME_TO_PATIENT] + row[DYEVERT_CONTRAST_VOLUME_DIVERTED] >= 3:
                         puff_inj = 1
                     elif row[CONTRAST_VOLUME_TO_PATIENT] + row[DYEVERT_CONTRAST_VOLUME_DIVERTED] <= 2:
@@ -295,7 +312,7 @@ def dyevert_uses(file_names):
                             dyevert_used_puff += 1
                             vol_used_puff += row[CONTRAST_VOLUME_TO_PATIENT]
 
-    uses.append([dyevert_not_used_inj, dyevert_used_inj, dyevert_not_used_puff, dyevert_used_puff])
+    uses.append([dyevert_not_used_inj, dyevert_used_inj, dyevert_not_used_puff, dyevert_used_puff, first_inj, last_inj])
     uses = uses[1:]
     return uses
 
@@ -317,42 +334,53 @@ def excel_flag_write(file_names, cmsws):
     data_sheet.title = 'Sheet1'
     print('Writing DyeMinish data')
     for row in range(len(cases)):
-        for col in range(len(cases[row]) - 1):
-            if cases[row][20] == 'PM':
-                data_sheet.cell(row=row + 2, column=col + 1, value=cases[row][col]).fill = PatternFill(
-                    fill_type='solid', start_color=YELLOW, end_color=YELLOW)
+        for col in range(40):
+            if cases[row][13] == 'PM':
+                data_sheet.cell(row=row + 2, column=col + 1).fill = \
+                    PatternFill(fill_type='solid', start_color=YELLOW, end_color=YELLOW)
                 print("PM")
-            elif float(cases[row][6]) <= 5.:
-                data_sheet.cell(row=row + 2, column=col + 1, value=cases[row][col]).fill = PatternFill(
-                    fill_type='solid', start_color=YELLOW, end_color=YELLOW)
+            elif float(cases[row][2]) <= 5.:
+                data_sheet.cell(row=row + 2, column=col + 1).fill = \
+                    PatternFill(fill_type='solid', start_color=YELLOW, end_color=YELLOW)
                 print("Duration < 5 min")
-            elif cases[row][8] == 0 and cases[row][9] == 0 and cases[row][10] == 0 \
-                    and cases[row][11] == 0:
-                data_sheet.cell(row=row + 2, column=col + 1, value=cases[row][col]).fill = PatternFill(
+            elif cases[row][4] == 0 and cases[row][5] == 0 and cases[row][6] == 0 and cases[row][7] == 0:
+                data_sheet.cell(row=row + 2, column=col + 1).fill = PatternFill(
                     fill_type='solid', start_color=YELLOW, end_color=YELLOW)
                 print("No divert use")
-            elif cases[row][9] <= 5:
-                data_sheet.cell(row=row + 2, column=col + 1, value=cases[row][col]).fill = PatternFill(
+            elif cases[row][5] <= 5:
+                data_sheet.cell(row=row + 2, column=col + 1).fill = PatternFill(
                     fill_type='solid', start_color=YELLOW, end_color=YELLOW)
-            else:
-                data_sheet.cell(row=row + 2, column=col + 1, value=cases[row][col])
             data_sheet.cell(row=row + 2, column=col + 1).alignment = Alignment(wrapText=True)
-        if cases[row][20] == 'PM':
+        data_sheet.cell(row=row+2, column=4, value=cases[row][0])
+        data_sheet.cell(row=row+2, column=1, value=cases[row][1])
+        data_sheet.cell(row=row+2, column=7, value=cases[row][2])
+        data_sheet.cell(row=row+2, column=8, value=cases[row][3])
+        data_sheet.cell(row=row+2, column=9, value=cases[row][4])
+        data_sheet.cell(row=row+2, column=10, value=cases[row][5])
+        data_sheet.cell(row=row+2, column=11, value=cases[row][6])
+        data_sheet.cell(row=row+2, column=12, value=cases[row][7])
+        data_sheet.cell(row=row+2, column=13, value=cases[row][8])
+        data_sheet.cell(row=row+2, column=19, value=cases[row][9])
+        data_sheet.cell(row=row+2, column=20, value=cases[row][12])
+        data_sheet.cell(row=row+2, column=22, value=cases[row][10])
+        data_sheet.cell(row=row+2, column=23, value=cases[row][11])
+        if cases[row][13] == 'PM':
             data_sheet.cell(row=row + 2, column=16, value='DyeTect Case')
             data_sheet.cell(row=row + 2, column=14, value='No')
-        elif float(cases[row][6]) <= 5.:
+        elif float(cases[row][2]) <= 5.:
             data_sheet.cell(row=row + 2, column=16, value='Case less than 5 Minutes')
             data_sheet.cell(row=row + 2, column=14, value='No')
-        elif cases[row][8] == 0 and cases[row][9] == 0 and cases[row][10] == 0 \
-                and cases[row][11] == 0:
+        elif cases[row][4] == 0 and cases[row][5] == 0 and cases[row][6] == 0 and cases[row][7] == 0:
             data_sheet.cell(row=row + 2, column=16, value='No contrast was injected')
             data_sheet.cell(row=row + 2, column=14, value='No')
         # write the case type (pmdv) into column 36
-        data_sheet.cell(row=row + 2, column=30, value=dvuses[row][1])
-        data_sheet.cell(row=row + 2, column=31, value=dvuses[row][0])
-        data_sheet.cell(row=row + 2, column=32, value=dvuses[row][3])
-        data_sheet.cell(row=row + 2, column=33, value=dvuses[row][2])
-        data_sheet.cell(row=row + 2, column=36, value=cases[row][20])
+        data_sheet.cell(row=row+2, column=30, value=dvuses[row][1])
+        data_sheet.cell(row=row+2, column=31, value=dvuses[row][0])
+        data_sheet.cell(row=row+2, column=32, value=dvuses[row][3])
+        data_sheet.cell(row=row+2, column=33, value=dvuses[row][2])
+        data_sheet.cell(row=row+2, column=36, value=cases[row][13])
+        data_sheet.cell(row=row+2, column=38, value=dvuses[row][4])
+        data_sheet.cell(row=row+2, column=39, value=dvuses[row][5])
 
     wb.save(xlsx_name)
     print('DyeMinish report with flagged data finished')

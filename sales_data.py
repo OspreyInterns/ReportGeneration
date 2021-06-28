@@ -111,7 +111,7 @@ def write(file_names, cmsw):
     print('Processing data for sales report')
     cases = list_builder(file_names)
     cases.append(('', '', '', '', '', '', '', '', '', ''))
-    cases.append(('', '', 'Excluded Cases', '', '', '', '', '', '', ''))
+    cases.append(('', '', 'Excluded Cases (not included in above summary)', '', '', '', '', '', '', ''))
     xlsx_name = str(cmsw) + '-data-tables.xlsx'
     wb = openpyxl.load_workbook('Sales-Template.xlsx')
     data_sheet = wb.active
@@ -136,11 +136,11 @@ def write(file_names, cmsw):
     data_sheet.cell(row=line-1, column=3).alignment = Alignment(wrapText=False)
     data_sheet.cell(row=line-1, column=3).font = Font(bold=True, size=16)
     data_sheet.cell(row=6, column=5, value=total_attempted)
-    data_sheet.cell(row=6, column=5).alignment = Alignment(wrapText=True)
+    data_sheet.cell(row=6, column=5).alignment = Alignment(wrapText=True, horizontal='center')
     data_sheet.cell(row=6, column=6, value=total_to_patient)
-    data_sheet.cell(row=6, column=6).alignment = Alignment(wrapText=True)
+    data_sheet.cell(row=6, column=6).alignment = Alignment(wrapText=True, horizontal='center')
     data_sheet.cell(row=6, column=7, value=total_diverted)
-    data_sheet.cell(row=6, column=7).alignment = Alignment(wrapText=True)
+    data_sheet.cell(row=6, column=7).alignment = Alignment(wrapText=True, horizontal='center')
     exclusions = ['Exclusion criteria include', '1. Case duration < 5 mins', '2. 0 mL contrast injected',
                   '3. DyeTect cases', '4. Diverted Vol < 5 mL', '5. Attempted Vol < 20 mL']
     cases.append(('', '', '', '', '', '', '', '', '   ', ''))
