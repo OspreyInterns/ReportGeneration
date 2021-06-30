@@ -65,36 +65,37 @@ def list_builder(file_names):
                         logging.warning(debug_msg)
                         print(debug_msg)
                     comment = ''
-                    if int(row[TOTAL_DURATION]) <= 5:
-                        comment = 'Case duration < 5 mins'
-                    if row[DIVERTED_CONTRAST_VOLUME] < 5.:
-                        comment = 'Diverted Vol < 5 mL'
-                    if row[ATTEMPTED_CONTRAST_INJECTION_VOLUME] == row[DIVERTED_CONTRAST_VOLUME] == \
-                            row[CUMULATIVE_VOLUME_TO_PATIENT] == row[PERCENTAGE_CONTRAST_DIVERTED] == 0:
-                        comment = '0 mL contrast injected'
-                    if row[DYEVERT_USED] == 0:
-                        comment = 'DyeTect cases'
-                    if row[ATTEMPTED_CONTRAST_INJECTION_VOLUME] <= 20.:
-                        comment = 'Attempted Vol < 20 mL'
-                    if row[CUMULATIVE_VOLUME_TO_PATIENT] <= row[THRESHOLD_VOLUME] \
-                            / 3 <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
-                        color = LIGHT_GREEN
-                    elif row[CUMULATIVE_VOLUME_TO_PATIENT] <= row[THRESHOLD_VOLUME] \
-                            * 2/3 <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
-                        color = GREEN
-                    elif row[CUMULATIVE_VOLUME_TO_PATIENT] <= row[THRESHOLD_VOLUME] \
-                            <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
-                        color = YELLOW
-                    elif row[CUMULATIVE_VOLUME_TO_PATIENT] >= row[THRESHOLD_VOLUME] \
-                            <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
-                        color = RED
+                if row[TOTAL_DURATION] <= 5:
+                    comment = 'Case less than 5 minutes'
+                elif row[CUMULATIVE_VOLUME_TO_PATIENT] == row[DIVERTED_CONTRAST_VOLUME] == \
+                        row[ATTEMPTED_CONTRAST_INJECTION_VOLUME] == 0:
+                    comment = '0 mL contrast injected'
+                elif row[DYEVERT_USED] == 0:
+                    comment = 'DyeTect Case'
+                elif row[DIVERTED_CONTRAST_VOLUME] < 5:
+                    comment = 'Diverted Volume < 5 mL'
+                    print(row[DATE_OF_PROCEDURE])
+                elif row[ATTEMPTED_CONTRAST_INJECTION_VOLUME] < 20:
+                    comment = 'Attempted Volume < 20 mL'
+                if row[CUMULATIVE_VOLUME_TO_PATIENT] <= row[THRESHOLD_VOLUME] \
+                        / 3 <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
+                    color = LIGHT_GREEN
+                elif row[CUMULATIVE_VOLUME_TO_PATIENT] <= row[THRESHOLD_VOLUME] \
+                        * 2/3 <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
+                    color = GREEN
+                elif row[CUMULATIVE_VOLUME_TO_PATIENT] <= row[THRESHOLD_VOLUME] \
+                        <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
+                    color = YELLOW
+                elif row[CUMULATIVE_VOLUME_TO_PATIENT] >= row[THRESHOLD_VOLUME] \
+                        <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
+                    color = RED
 
-                    else:
-                        color = WHITE
-                    cases.append((color, row[DATE_OF_PROCEDURE][0:10], row[DATE_OF_PROCEDURE][11:22],
-                                 row[THRESHOLD_VOLUME], row[ATTEMPTED_CONTRAST_INJECTION_VOLUME],
-                                 row[CUMULATIVE_VOLUME_TO_PATIENT], row[DIVERTED_CONTRAST_VOLUME],
-                                 row[PERCENTAGE_CONTRAST_DIVERTED], comment, ''))
+                else:
+                    color = WHITE
+                cases.append((color, row[DATE_OF_PROCEDURE][0:10], row[DATE_OF_PROCEDURE][11:22],
+                             row[THRESHOLD_VOLUME], row[ATTEMPTED_CONTRAST_INJECTION_VOLUME],
+                             row[CUMULATIVE_VOLUME_TO_PATIENT], row[DIVERTED_CONTRAST_VOLUME],
+                             row[PERCENTAGE_CONTRAST_DIVERTED], comment, ''))
     cases.sort(key=_sort_criteria)
     return cases
 

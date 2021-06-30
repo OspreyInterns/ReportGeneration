@@ -52,18 +52,18 @@ YELLOW = 'FFFF00'
 
 def straight_to_patient(file_name):
     con = sqlite.connect(file_name)
-    with con:
+    #with con:
 
-        missing_summary = []
-        cur = con.cursor()
-        cur.execute('SELECT * FROM CMSWCases')
-        rows = cur.fetchall()
+        #missing_summary = []
+        #cur = con.cursor()
+        #cur.execute('SELECT * FROM CMSWCases')
+        #rows = cur.fetchall()
 
-        for row in rows:
-            if row[ATTEMPTED_CONTRAST_INJECTION_VOLUME] == row[DIVERTED_CONTRAST_VOLUME] == \
-                    row[CUMULATIVE_VOLUME_TO_PATIENT] == row[DIVERTED_CONTRAST_VOLUME] == 0:
-                missing_summary.append(row[CASE_ID])
-                logging.warning('Case ' + str(row[CASE_ID]) + ' may be missing summary data')
+        #for row in rows:
+            #if row[ATTEMPTED_CONTRAST_INJECTION_VOLUME] == row[DIVERTED_CONTRAST_VOLUME] == \
+                    #row[CUMULATIVE_VOLUME_TO_PATIENT] == row[DIVERTED_CONTRAST_VOLUME] == 0:
+                #missing_summary.append(row[CASE_ID])
+                #logging.warning('Case ' + str(row[CASE_ID]) + ' may be missing summary data')
 
     with con:
 
@@ -76,13 +76,13 @@ def straight_to_patient(file_name):
         for placeholder in range(len(rows)):
             contrast_inj.append([0, 0])
         for row in rows:
-            if row[CMSW_CASE_ID] not in missing_summary:
-                if row[IS_AN_INJECTION] == 1 and (row[PERCENT_CONTRAST_SAVED] <= 1 or row[LINEAR_DYEVERT_MOVEMENT] <= 20) \
-                        and row[PREDOMINANT_CONTRAST_LINE_PRESSURE] == 0:
-                    contrast_inj[row[CASE_ID] - 1][0] += row[CONTRAST_VOLUME_TO_PATIENT]
-                if row[IS_AN_INJECTION] == 1 and (row[DYEVERT_CONTRAST_VOLUME_DIVERTED] == 0
-                                                  or row[LINEAR_DYEVERT_MOVEMENT] <= 20):
-                    contrast_inj[row[CASE_ID] - 1][1] += row[CONTRAST_VOLUME_TO_PATIENT]
+            #if row[CMSW_CASE_ID] not in missing_summary:
+            if row[IS_AN_INJECTION] == 1 and (row[PERCENT_CONTRAST_SAVED] <= 1 or row[LINEAR_DYEVERT_MOVEMENT] <= 20) \
+                    and row[PREDOMINANT_CONTRAST_LINE_PRESSURE] == 0:
+                contrast_inj[row[CASE_ID] - 1][0] += row[CONTRAST_VOLUME_TO_PATIENT]
+            if row[IS_AN_INJECTION] == 1 and (row[DYEVERT_CONTRAST_VOLUME_DIVERTED] == 0
+                                              or row[LINEAR_DYEVERT_MOVEMENT] <= 20):
+                contrast_inj[row[CASE_ID] - 1][1] += row[CONTRAST_VOLUME_TO_PATIENT]
 
         return contrast_inj
 
@@ -190,7 +190,8 @@ def list_builder(file_names):
                                            row[DIVERTED_CONTRAST_VOLUME], row[CUMULATIVE_VOLUME_TO_PATIENT],
                                            row[PERCENTAGE_CONTRAST_DIVERTED], perc_threshold,
                                            to_patient[row[CMSW_CASE_ID] - 1][0], what_if[row[CMSW_CASE_ID] - 1][0],
-                                           what_if[row[CMSW_CASE_ID] - 1][1], row[SERIAL_NUMBER], pmdv))
+                                           what_if[row[CMSW_CASE_ID] - 1][1], row[SERIAL_NUMBER], pmdv,
+                                           row[CMSW_CASE_ID]))
                 else:
                     # put end time into datetime object.
                     if row[2] == '2.2.44':
@@ -211,7 +212,7 @@ def list_builder(file_names):
                                            row[CUMULATIVE_VOLUME_TO_PATIENT], row[PERCENTAGE_CONTRAST_DIVERTED],
                                            perc_threshold, to_patient[row[CMSW_CASE_ID] - 1][0],
                                            what_if[row[CMSW_CASE_ID] - 1][0], what_if[row[CMSW_CASE_ID] - 1][1],
-                                           row[SERIAL_NUMBER], pmdv))
+                                           row[SERIAL_NUMBER], pmdv, row[CMSW_CASE_ID]))
 
     return DyeMinishCases
 
@@ -231,6 +232,8 @@ def dyevert_uses(file_names):
     vol_not_used_inj = 0
     vol_used_puff = 0
     vol_not_used_puff = 0
+    last_inj = ''
+    first_inj = ''
     for file_name in file_names:
         line = 0
         con = sqlite.connect(file_name)
@@ -269,10 +272,10 @@ def dyevert_uses(file_names):
             cur = con.cursor()
             cur.execute('SELECT * FROM CMSWInjections')
             rows = cur.fetchall()
-            first_inj = rows[0][2][-12:-7]
-            last_inj = ''
             for row in rows:
                 if row[CASE_ID] != line:
+                    if first_inj == '':
+                        first_inj = rows[0][2][-12:-4]
                     uses.append([dyevert_not_used_inj, dyevert_used_inj, dyevert_not_used_puff,
                                 dyevert_used_puff, first_inj, last_inj])
                     dyevert_used_inj = 0
@@ -283,13 +286,13 @@ def dyevert_uses(file_names):
                     vol_not_used_inj = 0
                     vol_used_puff = 0
                     vol_not_used_puff = 0
-                    first_inj = row[2][-12:-7]
+                    first_inj = row[2][-12:-4]
                     line += 1
                     while line < row[CASE_ID] - 1:
                         uses.append([0, 0, 0, 0, '', ''])
                         line += 1
                 if row[CASE_ID] == line:
-                    last_inj = row[2][-12:-7]
+                    last_inj = row[2][-12:-4]
                     if row[CONTRAST_VOLUME_TO_PATIENT] + row[DYEVERT_CONTRAST_VOLUME_DIVERTED] >= 3:
                         puff_inj = 1
                     elif row[CONTRAST_VOLUME_TO_PATIENT] + row[DYEVERT_CONTRAST_VOLUME_DIVERTED] <= 2:
@@ -333,7 +336,54 @@ def excel_flag_write(file_names, cmsws):
     data_sheet = wb.active
     data_sheet.title = 'Sheet1'
     print('Writing DyeMinish data')
-    for row in range(len(cases)):
+    for file_name in file_names:
+        con = sqlite.connect(file_name)
+        with con:
+            cur = con.cursor()
+            cur.execute('SELECT * FROM CMSWCases')
+            rows = cur.fetchall()
+        global TOTAL_DURATION, END_TIME, IS_AN_INJECTION, LINEAR_DYEVERT_MOVEMENT, DYEVERT_CONTRAST_VOLUME_DIVERTED, \
+            DYEVERT_CONTRAST_VOLUME_DIVERTED, PERCENT_CONTRAST_SAVED, CONTRAST_VOLUME_TO_PATIENT, \
+            PREDOMINANT_CONTRAST_LINE_PRESSURE, FLOW_RATE_TO_FROM_SYRINGE, FLOW_RATE_TO_PATIENT
+        missing_summary = []
+        if not rows == []:
+            if rows[0][2] == '2.1.56' or rows[0][2] == '2.1.24' or rows[0][2] == '2.1.67':
+                TOTAL_DURATION = 19
+                END_TIME = 20
+                IS_AN_INJECTION = 5
+                LINEAR_DYEVERT_MOVEMENT = 15
+                DYEVERT_CONTRAST_VOLUME_DIVERTED = 17
+                PERCENT_CONTRAST_SAVED = 18
+                CONTRAST_VOLUME_TO_PATIENT = 20
+                FLOW_RATE_TO_FROM_SYRINGE = 28
+                FLOW_RATE_TO_PATIENT = 29
+                PREDOMINANT_CONTRAST_LINE_PRESSURE = 30
+            else:
+                TOTAL_DURATION = 20
+                END_TIME = 19
+                IS_AN_INJECTION = 8
+                LINEAR_DYEVERT_MOVEMENT = 18
+                DYEVERT_CONTRAST_VOLUME_DIVERTED = 20
+                PERCENT_CONTRAST_SAVED = 21
+                CONTRAST_VOLUME_TO_PATIENT = 23
+                FLOW_RATE_TO_FROM_SYRINGE = 32
+                FLOW_RATE_TO_PATIENT = 33
+                PREDOMINANT_CONTRAST_LINE_PRESSURE = 34
+            cur = con.cursor()
+            cur.execute('SELECT * FROM CMSWCases')
+            rows = cur.fetchall()
+
+            for row in rows:
+                if row[ATTEMPTED_CONTRAST_INJECTION_VOLUME] == row[DIVERTED_CONTRAST_VOLUME] == \
+                        row[CUMULATIVE_VOLUME_TO_PATIENT] == row[DIVERTED_CONTRAST_VOLUME] == 0:
+                    missing_summary.append(row[CASE_ID])
+                    logging.warning('Case ' + str(row[CASE_ID]) + ' may be missing summary data')
+        with con:
+
+            cur = con.cursor()
+            cur.execute('SELECT * FROM CMSWInjections')
+            rows = cur.fetchall()
+    for row in range(len(cases)-1):
         for col in range(40):
             if cases[row][13] == 'PM':
                 data_sheet.cell(row=row + 2, column=col + 1).fill = \
@@ -352,7 +402,7 @@ def excel_flag_write(file_names, cmsws):
                     fill_type='solid', start_color=YELLOW, end_color=YELLOW)
             data_sheet.cell(row=row + 2, column=col + 1).alignment = Alignment(wrapText=True)
         data_sheet.cell(row=row+2, column=4, value=cases[row][0])
-        data_sheet.cell(row=row+2, column=1, value=cases[row][1])
+        data_sheet.cell(row=row+2, column=5, value=cases[row][1])
         data_sheet.cell(row=row+2, column=7, value=cases[row][2])
         data_sheet.cell(row=row+2, column=8, value=cases[row][3])
         data_sheet.cell(row=row+2, column=9, value=cases[row][4])
@@ -370,7 +420,11 @@ def excel_flag_write(file_names, cmsws):
         elif float(cases[row][2]) <= 5.:
             data_sheet.cell(row=row + 2, column=16, value='Case less than 5 Minutes')
             data_sheet.cell(row=row + 2, column=14, value='No')
-        elif cases[row][4] == 0 and cases[row][5] == 0 and cases[row][6] == 0 and cases[row][7] == 0:
+        elif cases[row][4] == 0 and cases[row][5] == 0 and cases[row][6] == 0 and cases[row][7] == 0 and\
+                cases[row][14] in missing_summary:
+            data_sheet.cell(row=row + 2, column=16, value='RG-17 Error')
+            data_sheet.cell(row=row + 2, column=14, value='No')
+        elif cases[row][4] == 0 and cases[row][5] == 0 and cases[row][6] == 0 and cases[row][7] == 0 :
             data_sheet.cell(row=row + 2, column=16, value='No contrast was injected')
             data_sheet.cell(row=row + 2, column=14, value='No')
         # write the case type (pmdv) into column 36

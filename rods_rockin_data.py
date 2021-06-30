@@ -228,9 +228,8 @@ def injection_table(file_names, cmsw):
                 SERIAL_NUMBER, DATE_OF_PROCEDURE, THRESHOLD_VOLUME, ATTEMPTED_CONTRAST_INJECTION_VOLUME, \
                 DIVERTED_CONTRAST_VOLUME, CUMULATIVE_VOLUME_TO_PATIENT, PERCENTAGE_CONTRAST_DIVERTED, TOTAL_DURATION
             if not rows == []:
-                if rows[0][2] == '2.1.56' or rows[0][2] == '2.1.24' or rows[0][2] == '2.1.67':
-                    CMSW_CASE_ID = 0
-                    CASE_ID = 1
+                if rows[0][2] == '2.1.56' or rows[0][2] == '2.1.24' or rows[0][2] == '2.1.67' or \
+                        rows[0][2] == '2.0.1981' or rows[0][2] == '2.0.2013':
                     TIME_STAMP = 2
                     SYRINGE_REVISION = 3
                     PMDV_REVISION = 4
@@ -266,8 +265,6 @@ def injection_table(file_names, cmsw):
                     PMDV_ADDRESS = 35
                     IS_DEVICE_REPLACEMENT = 36
                 else:
-                    CMSW_CASE_ID = 0
-                    CASE_ID = 1
                     SERIAL_NUMBER = 3
                     DATE_OF_PROCEDURE = 5
                     THRESHOLD_VOLUME = 8
@@ -368,6 +365,11 @@ def injection_table(file_names, cmsw):
                 else:
                     puff_inj = empty_cell
                     perc_saved.font = Font(bold=False)
+                    for entry in range(len(row)):
+                        if row[entry] is None:
+                            newrow = list(row)
+                            newrow[entry] = '0'
+                            row = newrow
                 cases.append([WriteOnlyCell(ws=data_sheet, value=row[TIME_STAMP]),
                               WriteOnlyCell(ws=data_sheet, value=row[SYRINGE_REVISION]),
                               WriteOnlyCell(ws=data_sheet, value=row[PMDV_REVISION]),
@@ -396,14 +398,14 @@ def injection_table(file_names, cmsw):
                               WriteOnlyCell(ws=data_sheet, value=row[STARTING_CONTRAST_PERCENT_IN_DYEVERT]),
                               WriteOnlyCell(ws=data_sheet, value=row[ENDING_CONTRAST_PERCENT_IN_DYEVERT]),
                               WriteOnlyCell(ws=data_sheet, value=row[DURATION]),
-                              WriteOnlyCell(ws=data_sheet, value=round(row[FLOW_RATE_TO_FROM_SYRINGE], 2)),
-                              WriteOnlyCell(ws=data_sheet, value=round(row[FLOW_RATE_TO_PATIENT], 2)),
+                              WriteOnlyCell(ws=data_sheet, value=round(float(row[FLOW_RATE_TO_FROM_SYRINGE]), 2)),
+                              WriteOnlyCell(ws=data_sheet, value=round(float(row[FLOW_RATE_TO_PATIENT]), 2)),
                               WriteOnlyCell(ws=data_sheet, value=row[PREDOMINANT_CONTRAST_LINE_PRESSURE]),
                               WriteOnlyCell(ws=data_sheet, value=row[STARTING_DYEVERT_STOPCOCK_POSITION]),
                               WriteOnlyCell(ws=data_sheet, value=row[IS_SYSTEM_PAUSED]),
-                             WriteOnlyCell(ws=data_sheet, value=''),
-                              WriteOnlyCell(ws=data_sheet, value=round(row[CONTRAST_VOLUME_TO_PATIENT]
-                                                                       + row[DYEVERT_CONTRAST_VOLUME_DIVERTED], 2)),
+                              WriteOnlyCell(ws=data_sheet, value=''),
+                              WriteOnlyCell(ws=data_sheet, value=round(float(row[CONTRAST_VOLUME_TO_PATIENT])
+                                                                    + float(row[DYEVERT_CONTRAST_VOLUME_DIVERTED]), 2)),
                               puff_inj])
                 cases[-1][29].font = Font(color=BLUE)
                 cases[-1][30].font = Font(color=BLUE)
