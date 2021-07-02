@@ -487,7 +487,6 @@ def dyevert_uses(file_name):
     and the number of times contrast was injected both in puffs and injections
     Volume data is currently unused
     """
-    con = sqlite.connect(file_name)
     dyevert_used_inj = 0
     dyevert_not_used_inj = 0
     dyevert_used_puff = 0
@@ -498,19 +497,48 @@ def dyevert_uses(file_name):
     vol_not_used_puff = 0
     case_number = 0
     uses = []
-
+    con = sqlite.connect(file_name)
+    with con:
+        cur = con.cursor()
+        cur.execute('SELECT * FROM CMSWCases')
+        rows = cur.fetchall()
+        number_of_cases = len(rows)
+    global TOTAL_DURATION, END_TIME, IS_AN_INJECTION, LINEAR_DYEVERT_MOVEMENT, DYEVERT_CONTRAST_VOLUME_DIVERTED, \
+        DYEVERT_CONTRAST_VOLUME_DIVERTED, PERCENT_CONTRAST_SAVED, CONTRAST_VOLUME_TO_PATIENT, \
+        PREDOMINANT_CONTRAST_LINE_PRESSURE, FLOW_RATE_TO_FROM_SYRINGE, FLOW_RATE_TO_PATIENT
+    if not rows == []:
+        if rows[0][2] == '2.1.56' or rows[0][2] == '2.1.24' or rows[0][2] == '2.1.67':
+            TOTAL_DURATION = 19
+            END_TIME = 20
+            IS_AN_INJECTION = 5
+            LINEAR_DYEVERT_MOVEMENT = 15
+            DYEVERT_CONTRAST_VOLUME_DIVERTED = 17
+            PERCENT_CONTRAST_SAVED = 18
+            CONTRAST_VOLUME_TO_PATIENT = 20
+            FLOW_RATE_TO_FROM_SYRINGE = 28
+            FLOW_RATE_TO_PATIENT = 29
+            PREDOMINANT_CONTRAST_LINE_PRESSURE = 30
+        else:
+            TOTAL_DURATION = 20
+            END_TIME = 19
+            IS_AN_INJECTION = 8
+            LINEAR_DYEVERT_MOVEMENT = 18
+            DYEVERT_CONTRAST_VOLUME_DIVERTED = 20
+            PERCENT_CONTRAST_SAVED = 21
+            CONTRAST_VOLUME_TO_PATIENT = 23
+            FLOW_RATE_TO_FROM_SYRINGE = 32
+            FLOW_RATE_TO_PATIENT = 33
+            PREDOMINANT_CONTRAST_LINE_PRESSURE = 34
     with con:
 
         cur = con.cursor()
         cur.execute('SELECT * FROM CMSWInjections')
         rows = cur.fetchall()
 
-        if not rows == []:
-            for ph in range(rows[-1][1] + 1):
-                uses.append([0, 0, 0, 0])
         for row in rows:
             if row[CASE_ID] != case_number:
-                uses[case_number] = ([dyevert_not_used_inj, dyevert_used_inj, dyevert_not_used_puff, dyevert_used_puff])
+                uses.append([dyevert_not_used_inj, dyevert_used_inj, dyevert_not_used_puff,
+                            dyevert_used_puff])
                 dyevert_used_inj = 0
                 dyevert_not_used_inj = 0
                 dyevert_used_puff = 0
@@ -519,7 +547,10 @@ def dyevert_uses(file_name):
                 vol_not_used_inj = 0
                 vol_used_puff = 0
                 vol_not_used_puff = 0
-                case_number = row[1]
+                case_number += 1
+                while case_number < row[CASE_ID] - 1:
+                    uses.append([0, 0, 0, 0, '', ''])
+                    case_number += 1
             if row[CASE_ID] == case_number:
                 if row[CONTRAST_VOLUME_TO_PATIENT] + row[DYEVERT_CONTRAST_VOLUME_DIVERTED] >= 3:
                     puff_inj = 1
@@ -542,9 +573,10 @@ def dyevert_uses(file_name):
                     elif row[IS_AN_INJECTION] == 1 and puff_inj == 2:
                         dyevert_used_puff += 1
                         vol_used_puff += row[CONTRAST_VOLUME_TO_PATIENT]
-        if not dyevert_not_used_inj == dyevert_used_inj == dyevert_not_used_puff == dyevert_used_puff == 0:
-            uses[case_number] = ([dyevert_not_used_inj, dyevert_used_inj, dyevert_not_used_puff, dyevert_used_puff])
 
+        uses.append([dyevert_not_used_inj, dyevert_used_inj, dyevert_not_used_puff, dyevert_used_puff])
+        while len(uses) <= number_of_cases+1:
+            uses.append([0, 0, 0, 0])
         return uses
 
 

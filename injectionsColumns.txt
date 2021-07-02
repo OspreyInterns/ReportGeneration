@@ -28,8 +28,8 @@
 27: Duration: int, s*1000
 28: FlowRateToFromSyringe: float, flow rate out of syringe in mL/s
 29: FlowRateToPatient: float, flow rate into patient in mL/s
-30: PredominantContrastLinePressure: int, 0 = neutral pressure, 1 = positive pressure, 2 = negative pressure
-31: StartingDyeVertStopcockPosition: int
+30: PredominantContrastLinePressure: int, 0 = neutral pressure, 1 = positive pressure(inj), 2 = negative pressure(asp)
+31: StartingDyeVertStopcockPosition: int, 0 = On, 1 = Off, 2 = sideways
 32: IsSystemPaused: int, 1 = paused, 0 = running
 33: EndingContrastPercentInSyringe: float, the percent of the fluid in the syringe that is contrast at the end
 34: SyringeAddress: str

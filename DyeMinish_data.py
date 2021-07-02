@@ -78,7 +78,7 @@ def straight_to_patient(file_name):
         for row in rows:
             #if row[CMSW_CASE_ID] not in missing_summary:
             if row[IS_AN_INJECTION] == 1 and (row[PERCENT_CONTRAST_SAVED] <= 1 or row[LINEAR_DYEVERT_MOVEMENT] <= 20) \
-                    and row[PREDOMINANT_CONTRAST_LINE_PRESSURE] == 0:
+                    and row[PREDOMINANT_CONTRAST_LINE_PRESSURE] == 0 and row[FLOW_RATE_TO_PATIENT] > .5:
                 contrast_inj[row[CASE_ID] - 1][0] += row[CONTRAST_VOLUME_TO_PATIENT]
             if row[IS_AN_INJECTION] == 1 and (row[DYEVERT_CONTRAST_VOLUME_DIVERTED] == 0
                                               or row[LINEAR_DYEVERT_MOVEMENT] <= 20):
@@ -383,7 +383,7 @@ def excel_flag_write(file_names, cmsws):
             cur = con.cursor()
             cur.execute('SELECT * FROM CMSWInjections')
             rows = cur.fetchall()
-    for row in range(len(cases)-1):
+    for row in range(len(cases)):
         for col in range(40):
             if cases[row][13] == 'PM':
                 data_sheet.cell(row=row + 2, column=col + 1).fill = \
