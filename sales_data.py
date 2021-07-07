@@ -122,8 +122,10 @@ def write(file_names, cmsw):
     total_attempted = 0
     total_to_patient = 0
     total_diverted = 0
+    number_of_cases = -2
     for row in range(len(cases)):
         if cases[row][8] == '':
+            number_of_cases += 1
             if not cases[row][4] == '':
                 total_attempted += float(cases[row][4])
                 total_to_patient += float(cases[row][5])
@@ -164,17 +166,18 @@ def write(file_names, cmsw):
     diverted = 0
     print('Report written, constructing slide')
     for case in cases:
-        if case[0] == RED:
-            colors[0] += 1
-        elif case[0] == YELLOW:
-            colors[1] += 1
-        elif case[0] == GREEN:
-            colors[2] += 1
-        elif case[0] == LIGHT_GREEN:
-            colors[3] += 1
-        if not case[4] == '':
-            attempted += float(case[4])
-            diverted += float(case[6])
+        if case[8] == '':
+            if case[0] == RED:
+                colors[0] += 1
+            elif case[0] == YELLOW:
+                colors[1] += 1
+            elif case[0] == GREEN:
+                colors[2] += 1
+            elif case[0] == LIGHT_GREEN:
+                colors[3] += 1
+            if not case[4] == '':
+                attempted += float(case[4])
+                diverted += float(case[6])
 
     percent_saved = round(diverted/attempted*100)
     prs = Presentation('Slide-Template.pptx')
@@ -184,7 +187,7 @@ def write(file_names, cmsw):
     data.add_series(title, colors)
     data.categories = ['> Threshold, N=', '< Threshold, N=', '< 2/3 Threshold, N=', '< 1/3 Threshold, N=']
     prs.slides[0].shapes[4].chart.replace_data(data)
-    text = ['All cases (N=' + str(len(cases)) + ')',
+    text = ['All cases (N=' + str(number_of_cases) + ')',
             str(percent_saved) + '% avg \nLess \nContrast',
             str(round(diverted)) + ' mL less total']
 
