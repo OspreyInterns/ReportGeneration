@@ -234,6 +234,7 @@ def dyevert_uses(file_names):
     vol_not_used_puff = 0
     last_inj = ''
     first_inj = ''
+    number_of_cases = 0
     for file_name in file_names:
         line = 0
         con = sqlite.connect(file_name)
@@ -241,6 +242,7 @@ def dyevert_uses(file_names):
             cur = con.cursor()
             cur.execute('SELECT * FROM CMSWCases')
             rows = cur.fetchall()
+            number_of_cases += len(rows)
         global TOTAL_DURATION, END_TIME, IS_AN_INJECTION, LINEAR_DYEVERT_MOVEMENT, DYEVERT_CONTRAST_VOLUME_DIVERTED, \
             DYEVERT_CONTRAST_VOLUME_DIVERTED, PERCENT_CONTRAST_SAVED, CONTRAST_VOLUME_TO_PATIENT, \
             PREDOMINANT_CONTRAST_LINE_PRESSURE, FLOW_RATE_TO_FROM_SYRINGE, FLOW_RATE_TO_PATIENT
@@ -316,6 +318,8 @@ def dyevert_uses(file_names):
                             vol_used_puff += row[CONTRAST_VOLUME_TO_PATIENT]
 
     uses.append([dyevert_not_used_inj, dyevert_used_inj, dyevert_not_used_puff, dyevert_used_puff, first_inj, last_inj])
+    while len(uses) <= number_of_cases+2:
+        uses.append([0, 0, 0, 0, "",""])
     uses = uses[1:]
     return uses
 

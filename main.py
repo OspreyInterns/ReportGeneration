@@ -58,6 +58,8 @@ class Application(tk.Frame):
         """
         file_names = filedialog.askopenfilenames(title='Select database file',
                                                  filetypes=(('sqlite files', '*.sqlite'), ('all files', '*.*')))
+        file_names = list(file_names)
+        file_names.sort()
         cmsws = []
         print('Processing file selection', end='')
         for file in file_names:
@@ -89,6 +91,7 @@ class Application(tk.Frame):
                                                  filetypes=(('sqlite files', '*.sqlite'), ('all files', '*.*')))
         print('Processing file selection', end='')
         file_names = list(file_names)
+        file_names.sort()
         for file in file_names:
             cmsws.append(str(cmsw_read.cmsw_id_read(file)))
             print('.', end='')
@@ -113,6 +116,7 @@ class Application(tk.Frame):
                                                  filetypes=(('sqlite files', '*.sqlite'), ('all files', '*.*')))
         print('Processing file selection', end='')
         file_names = list(file_names)
+        file_names.sort()
         for file in file_names:
             cmsws.append(str(cmsw_read.cmsw_id_read(file)))
             print('.', end='')
@@ -136,6 +140,7 @@ class Application(tk.Frame):
                                                  filetypes=(('sqlite files', '*.sqlite'), ('all files', '*.*')))
         print('Processing file selection', end='')
         file_names = list(file_names)
+        file_names.sort()
         for file in file_names:
             cmsws.append(str(cmsw_read.cmsw_id_read(file)))
             print('.', end='')
