@@ -319,10 +319,13 @@ def dyevert_uses(file_names):
 
     uses.append([dyevert_not_used_inj, dyevert_used_inj, dyevert_not_used_puff, dyevert_used_puff, first_inj, last_inj])
     while len(uses) <= number_of_cases+2:
-        uses.append([0, 0, 0, 0, "",""])
+        uses.append([0, 0, 0, 0, "", ""])
     uses = uses[1:]
     return uses
 
+
+def case_reconstruction(caseID, cmsw):
+    return []
 
 def excel_flag_write(file_names, cmsws):
     """Writes data into the an Excel Sheet
@@ -380,13 +383,28 @@ def excel_flag_write(file_names, cmsws):
             for row in rows:
                 if row[ATTEMPTED_CONTRAST_INJECTION_VOLUME] == row[DIVERTED_CONTRAST_VOLUME] == \
                         row[CUMULATIVE_VOLUME_TO_PATIENT] == row[DIVERTED_CONTRAST_VOLUME] == 0:
-                    missing_summary.append(row[CASE_ID])
-                    logging.warning('Case ' + str(row[CASE_ID]) + ' may be missing summary data')
+                    missing_summary.append([row[0], file_name])
+                    logging.warning('Case ' + str(row[0]) + ' may be missing summary data')
         with con:
 
             cur = con.cursor()
             cur.execute('SELECT * FROM CMSWInjections')
             rows = cur.fetchall()
+            has_injections = []
+            for row in rows:
+                has_injections.append([row[1], file_name])
+    rg17err = []
+    for missing in missing_summary:
+        if missing in has_injections:
+            rg17err.append(missing)
+    if not rg17err == []:
+        for entry in range(len(rg17err)):
+            con = sqlite.connect(rg17err[entry][1])
+            with con:
+                cur = con.cursor()
+                cur.execute('SELECT * FROM CMSWCases')
+                rows = cur.fetchall()
+            rg17err[entry] = [rg17err[entry][0], rg17err[entry][1], rows[rg17err[entry][0]+1][1]]
     for row in range(len(cases)):
         for col in range(40):
             if cases[row][13] == 'PM':
@@ -424,10 +442,16 @@ def excel_flag_write(file_names, cmsws):
         elif float(cases[row][2]) <= 5.:
             data_sheet.cell(row=row + 2, column=16, value='Case less than 5 Minutes')
             data_sheet.cell(row=row + 2, column=14, value='No')
-        elif cases[row][4] == 0 and cases[row][5] == 0 and cases[row][6] == 0 and cases[row][7] == 0 and\
-                cases[row][14] in missing_summary:
-            data_sheet.cell(row=row + 2, column=16, value='RG-17 Error')
+        elif cases[row][4] == 0 and cases[row][5] == 0 and cases[row][6] == 0 and cases[row][7] == 0:
+            errset = 0
+            for err in rg17err:
+                if cases[row][14] == err[0]:
+                    data_sheet.cell(row=row + 2, column=16, value='RG17 Error')
+                    errset = 1
+            if errset == 0:
+                data_sheet.cell(row=row + 2, column=16, value='No contrast was injected')
             data_sheet.cell(row=row + 2, column=14, value='No')
+
         elif cases[row][4] == 0 and cases[row][5] == 0 and cases[row][6] == 0 and cases[row][7] == 0 :
             data_sheet.cell(row=row + 2, column=16, value='No contrast was injected')
             data_sheet.cell(row=row + 2, column=14, value='No')
