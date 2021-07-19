@@ -3,7 +3,7 @@ import logging
 import openpyxl
 from openpyxl.styles import Alignment, PatternFill
 import datetime
-
+import math
 # case column numbers
 
 CMSW_CASE_ID = 0
@@ -327,6 +327,37 @@ def dyevert_uses(file_names):
 def case_reconstruction(caseID, cmsw):
     return []
 
+
+def sort_by_date(case):
+    return case[0], case[1]
+
+
+def case_by_date(filenames):
+    cases = []
+    for filename in filenames:
+        con = sqlite.connect(filename)
+        with con:
+            cur = con.cursor()
+            cur.execute('SELECT * FROM CMSWCases')
+            rows = cur.fetchall()
+            for row in rows:
+                cases.append(row[5][0:7])
+    cases.sort()
+    casesPerMonth = {}
+    for case in cases:
+        if not casesPerMonth.get(case) is None:
+            casesPerMonth[case] += 1
+        else:
+            casesPerMonth[case] = 1
+    CasesPerQuarter = {}
+    for month in casesPerMonth:
+        if CasesPerQuarter.get(str(month[0:-3])+' Q'+str(math.ceil(float(month[-2:])/3))) is None:
+            CasesPerQuarter[str(month[0:-3])+' Q'+str(math.ceil(float(month[-2:])/3))] = int(casesPerMonth.get(month))
+        else:
+            CasesPerQuarter[str(month[0:-3])+' Q'+str(math.ceil(float(month[-2:])/3))] += int(casesPerMonth.get(month))
+    return [casesPerMonth, CasesPerQuarter]
+
+
 def excel_flag_write(file_names, cmsws):
     """Writes data into the an Excel Sheet
     Takes two inputs:
@@ -464,6 +495,22 @@ def excel_flag_write(file_names, cmsws):
         data_sheet.cell(row=row+2, column=38, value=dvuses[row][4])
         data_sheet.cell(row=row+2, column=39, value=dvuses[row][5])
 
+    date_sheet = wb.create_sheet(title='Cases by Date')
+    dates = case_by_date(file_names)
+    months = []
+    month_case_count = []
+    for date in list(dates[0]):
+        months.append(date)
+        month_case_count.append(dates[0][date])
+    quarters = []
+    quarter_cases = []
+    for Q in list(dates[1]):
+        quarters.append(Q)
+        quarter_cases.append(dates[1][Q])
+    date_sheet.append(months)
+    date_sheet.append(month_case_count)
+    date_sheet.append(quarters)
+    date_sheet.append(quarter_cases)
     wb.save(xlsx_name)
     print('DyeMinish report with flagged data finished')
 

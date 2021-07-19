@@ -7,6 +7,7 @@ import DyeMinish_data
 import sales_data
 import rods_rockin_data
 import cmsw_read
+import mississippi_sales_data
 
 # Main Method of project, creates UI and takes input to pass to functions
 
@@ -46,6 +47,11 @@ class Application(tk.Frame):
         self.all = tk.Button(self)
         self.all['text'] = 'I want it all'
         self.all['command'] = self.all_reports
+        self.all.pack(side='top')
+
+        self.all = tk.Button(self)
+        self.all['text'] = 'Mississippi'
+        self.all['command'] = self.mississippi_sales
         self.all.pack(side='top')
 
         self.quit = tk.Button(self, text='QUIT', fg='red',
@@ -155,6 +161,31 @@ class Application(tk.Frame):
             sales_data.write(file_names, cmsws)
             DyeMinish_data.excel_flag_write(file_names, cmsws)
             # DyeMinish_data.excel_destructive_write(file_names, cmsws)
+        except Exception:
+            logging.exception('Unexpected issue')
+        print('Done')
+
+    @staticmethod
+    def mississippi_sales():
+        """Opens file browser, processes chosen files, then calls the write method"""
+        cmsws = []
+        number = 0
+        file_names = filedialog.askopenfilenames(title='Select database file',
+                                                 filetypes=(('sqlite files', '*.sqlite'), ('all files', '*.*')))
+        print('Processing file selection', end='')
+        file_names = list(file_names)
+        file_names.sort()
+        for file in file_names:
+            cmsws.append(str(cmsw_read.cmsw_id_read(file)))
+            print('.', end='')
+        for cmsw in cmsws:
+            cmsw = cmsw.replace('/', '')
+            cmsws[number] = cmsw
+            number += 1
+        print('')
+        print('Input ready, beginning report...')
+        try:
+            mississippi_sales_data.write(file_names, cmsws)
         except Exception:
             logging.exception('Unexpected issue')
         print('Done')
