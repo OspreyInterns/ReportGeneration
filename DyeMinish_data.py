@@ -1,9 +1,12 @@
 import sqlite3 as sqlite
 import logging
 import openpyxl
-from openpyxl.styles import Alignment, PatternFill
+from openpyxl.styles import Alignment, PatternFill, Border, Side
 import datetime
 import math
+from openpyxl.chart import (
+    LineChart,
+    Reference)
 # case column numbers
 
 CMSW_CASE_ID = 0
@@ -191,7 +194,7 @@ def list_builder(file_names):
                                            row[PERCENTAGE_CONTRAST_DIVERTED], perc_threshold,
                                            to_patient[row[CMSW_CASE_ID] - 1][0], what_if[row[CMSW_CASE_ID] - 1][0],
                                            what_if[row[CMSW_CASE_ID] - 1][1], row[SERIAL_NUMBER], pmdv,
-                                           row[CMSW_CASE_ID]))
+                                           row[CMSW_CASE_ID], row[END_TIME][-12:-4]))
                 else:
                     # put end time into datetime object.
                     if row[2] == '2.2.44':
@@ -204,6 +207,7 @@ def list_builder(file_names):
                         # else this is 2.1.67 system.
                         case_end = datetime.datetime.strptime(row[END_TIME], '%Y-%m-%d %H:%M:%S.%f')
                     print(row[2], case_end.strftime('%H:%M:%S'))
+                    case_end = case_end.strftime('%H:%M:%S')
                     DyeMinishCases.append((row[DATE_OF_PROCEDURE][0:10], row[CASE_ID][-12:-4],
                                            # case_end.strftime('%H:%M:%S'),
                                            row[TOTAL_DURATION], row[THRESHOLD_VOLUME],
@@ -212,7 +216,7 @@ def list_builder(file_names):
                                            row[CUMULATIVE_VOLUME_TO_PATIENT], row[PERCENTAGE_CONTRAST_DIVERTED],
                                            perc_threshold, to_patient[row[CMSW_CASE_ID] - 1][0],
                                            what_if[row[CMSW_CASE_ID] - 1][0], what_if[row[CMSW_CASE_ID] - 1][1],
-                                           row[SERIAL_NUMBER], pmdv, row[CMSW_CASE_ID]))
+                                           row[SERIAL_NUMBER], pmdv, row[CMSW_CASE_ID], case_end))
 
     return DyeMinishCases
 
@@ -276,9 +280,9 @@ def dyevert_uses(file_names):
             rows = cur.fetchall()
             for row in rows:
                 if row[CASE_ID] != line:
-                    if first_inj == '':
+                    if first_inj == '':  #this sets the first first injection time
                         first_inj = rows[0][2][-12:-4]
-                    uses.append([dyevert_not_used_inj, dyevert_used_inj, dyevert_not_used_puff,
+                    uses.append([dyevert_not_used_inj, dyevert_used_inj, dyevert_not_used_puff,   #hre we write in the numbers we have counted from the loops once we detect that we're on a new case
                                 dyevert_used_puff, first_inj, last_inj])
                     dyevert_used_inj = 0
                     dyevert_not_used_inj = 0
@@ -290,12 +294,12 @@ def dyevert_uses(file_names):
                     vol_not_used_puff = 0
                     first_inj = row[2][-12:-4]
                     line += 1
-                    while line < row[CASE_ID] - 1:
+                    while line < row[CASE_ID]:  #this handles cases which have no injections by adding appropriate blank data to maintain proper spacing
                         uses.append([0, 0, 0, 0, '', ''])
                         line += 1
                 if row[CASE_ID] == line:
                     last_inj = row[2][-12:-4]
-                    if row[CONTRAST_VOLUME_TO_PATIENT] + row[DYEVERT_CONTRAST_VOLUME_DIVERTED] >= 3:
+                    if row[CONTRAST_VOLUME_TO_PATIENT] + row[DYEVERT_CONTRAST_VOLUME_DIVERTED] >= 3: #1 is an injection, 2 is a puff
                         puff_inj = 1
                     elif row[CONTRAST_VOLUME_TO_PATIENT] + row[DYEVERT_CONTRAST_VOLUME_DIVERTED] <= 2:
                         puff_inj = 2
@@ -303,8 +307,8 @@ def dyevert_uses(file_names):
                         puff_inj = 1
                     elif row[FLOW_RATE_TO_FROM_SYRINGE] <= 2:
                         puff_inj = 2
-                    if round(row[FLOW_RATE_TO_FROM_SYRINGE], 2) != 0 and round(row[FLOW_RATE_TO_PATIENT], 2) != 0:
-                        if row[IS_AN_INJECTION] == 1 and row[PERCENT_CONTRAST_SAVED] == 0 and puff_inj == 1:
+                    if round(row[FLOW_RATE_TO_FROM_SYRINGE], 2) != 0 and round(row[FLOW_RATE_TO_PATIENT], 2) != 0: #here it decides if the DyeVert was used, based on whether or not contrast was diverted
+                        if row[IS_AN_INJECTION] == 1 and row[PERCENT_CONTRAST_SAVED] == 0 and puff_inj == 1: #it also sums up the contrast used in each category, though this is not currently used
                             dyevert_not_used_inj += 1
                             vol_not_used_inj += row[CONTRAST_VOLUME_TO_PATIENT]
                         elif row[IS_AN_INJECTION] == 1 and puff_inj == 1:
@@ -449,13 +453,14 @@ def excel_flag_write(file_names, cmsws):
             elif cases[row][4] == 0 and cases[row][5] == 0 and cases[row][6] == 0 and cases[row][7] == 0:
                 data_sheet.cell(row=row + 2, column=col + 1).fill = PatternFill(
                     fill_type='solid', start_color=YELLOW, end_color=YELLOW)
-                print("No divert use")
+                print("No DyeVert use")
             elif cases[row][5] <= 5:
                 data_sheet.cell(row=row + 2, column=col + 1).fill = PatternFill(
                     fill_type='solid', start_color=YELLOW, end_color=YELLOW)
             data_sheet.cell(row=row + 2, column=col + 1).alignment = Alignment(wrapText=True)
         data_sheet.cell(row=row+2, column=4, value=cases[row][0])
         data_sheet.cell(row=row+2, column=5, value=cases[row][1])
+        data_sheet.cell(row=row+2, column=6, value=cases[row][15])
         data_sheet.cell(row=row+2, column=7, value=cases[row][2])
         data_sheet.cell(row=row+2, column=8, value=cases[row][3])
         data_sheet.cell(row=row+2, column=9, value=cases[row][4])
@@ -497,20 +502,57 @@ def excel_flag_write(file_names, cmsws):
 
     date_sheet = wb.create_sheet(title='Cases by Date')
     dates = case_by_date(file_names)
-    months = []
-    month_case_count = []
+    months = ['Month']
+    month_case_count = ['Cases in Month']
     for date in list(dates[0]):
         months.append(date)
         month_case_count.append(dates[0][date])
-    quarters = []
-    quarter_cases = []
+    quarters = ['Quarter']
+    quarter_cases = ['Cases Per Quarter']
     for Q in list(dates[1]):
         quarters.append(Q)
         quarter_cases.append(dates[1][Q])
-    date_sheet.append(months)
-    date_sheet.append(month_case_count)
-    date_sheet.append(quarters)
-    date_sheet.append(quarter_cases)
+    col = 1
+    thin_border = Border(left=Side(style='thin'),
+                         right=Side(style='thin'),
+                         top=Side(style='thin'),
+                         bottom=Side(style='thin'))
+    for month in months:
+        date_sheet.cell(row=1, column=col, value=month)
+        date_sheet.cell(row=1, column=col).alignment = Alignment(wrapText=True)
+        date_sheet.cell(row=1, column=col).border = thin_border
+        col += 1
+    col = 1
+    for count in month_case_count:
+        date_sheet.cell(row=2, column=col, value=count)
+        date_sheet.cell(row=2, column=col).alignment = Alignment(wrapText=True)
+        date_sheet.cell(row=2, column=col).border = thin_border
+        col += 1
+    col = 1
+    for quarter in quarters:
+        date_sheet.cell(row=4, column=col, value=quarter)
+        date_sheet.cell(row=4, column=col).alignment = Alignment(wrapText=True)
+        date_sheet.cell(row=4, column=col).border = thin_border
+        col += 1
+    col = 1
+    for count in quarter_cases:
+        date_sheet.cell(row=5, column=col, value=count)
+        date_sheet.cell(row=5, column=col).alignment = Alignment(wrapText=True)
+        date_sheet.cell(row=5, column=col).border = thin_border
+        col += 1
+    c1 = LineChart()
+    c1.title = 'Number of DyeVert Cases by Month'
+    c1.y_axis.title = '# of cases'
+    c1.x_axis.title = ''
+    c1.style = 13
+
+    data = Reference(date_sheet, 2, 1, len(months), 2)
+    c1.add_data(data)
+
+    s1 = c1.series[0]
+    s1.marker.symbol = 'square'
+
+    date_sheet.add_chart(c1, 'A7')
     wb.save(xlsx_name)
     print('DyeMinish report with flagged data finished')
 
