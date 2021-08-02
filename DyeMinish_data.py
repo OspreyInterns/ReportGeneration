@@ -2,6 +2,7 @@ import sqlite3 as sqlite
 import logging
 import openpyxl
 from openpyxl.styles import Alignment, PatternFill, Border, Side
+from openpyxl.chart.axis import DateAxis
 import datetime
 import math
 from openpyxl.chart import (
@@ -512,48 +513,65 @@ def excel_flag_write(file_names, cmsws):
     for Q in list(dates[1]):
         quarters.append(Q)
         quarter_cases.append(dates[1][Q])
-    col = 1
+    row = 1
     thin_border = Border(left=Side(style='thin'),
                          right=Side(style='thin'),
                          top=Side(style='thin'),
                          bottom=Side(style='thin'))
     for month in months:
-        date_sheet.cell(row=1, column=col, value=month)
-        date_sheet.cell(row=1, column=col).alignment = Alignment(wrapText=True)
-        date_sheet.cell(row=1, column=col).border = thin_border
-        col += 1
-    col = 1
+        date_sheet.cell(row=row, column=1, value=month)
+        date_sheet.cell(row=row, column=1).alignment = Alignment(wrapText=True)
+        date_sheet.cell(row=row, column=1).border = thin_border
+        row += 1
+    row = 1
     for count in month_case_count:
-        date_sheet.cell(row=2, column=col, value=count)
-        date_sheet.cell(row=2, column=col).alignment = Alignment(wrapText=True)
-        date_sheet.cell(row=2, column=col).border = thin_border
-        col += 1
-    col = 1
+        date_sheet.cell(row=row, column=2, value=count)
+        date_sheet.cell(row=row, column=2).alignment = Alignment(wrapText=True)
+        date_sheet.cell(row=row, column=2).border = thin_border
+        row += 1
+    row = 1
     for quarter in quarters:
-        date_sheet.cell(row=4, column=col, value=quarter)
-        date_sheet.cell(row=4, column=col).alignment = Alignment(wrapText=True)
-        date_sheet.cell(row=4, column=col).border = thin_border
-        col += 1
-    col = 1
+        date_sheet.cell(row=row, column=4, value=quarter)
+        date_sheet.cell(row=row, column=4).alignment = Alignment(wrapText=True)
+        date_sheet.cell(row=row, column=4).border = thin_border
+        row += 1
+    row = 1
     for count in quarter_cases:
-        date_sheet.cell(row=5, column=col, value=count)
-        date_sheet.cell(row=5, column=col).alignment = Alignment(wrapText=True)
-        date_sheet.cell(row=5, column=col).border = thin_border
-        col += 1
+        date_sheet.cell(row=row, column=5, value=count)
+        date_sheet.cell(row=row, column=5).alignment = Alignment(wrapText=True)
+        date_sheet.cell(row=row, column=5).border = thin_border
+        row += 1
     c1 = LineChart()
     c1.title = 'Number of DyeVert Cases by Month'
     c1.y_axis.title = '# of cases'
     c1.x_axis.title = ''
     c1.style = 13
 
-    data = Reference(date_sheet, 2, 1, len(months), 2)
-    c1.add_data(data)
+    data1 = Reference(date_sheet, 2, 2, 2, len(months))
+    c1.add_data(data1)
+    dates1 = Reference(date_sheet, 1, 2, 1, len(months))
+    c1.set_categories(dates1)
 
     s1 = c1.series[0]
     s1.marker.symbol = 'square'
 
-    date_sheet.add_chart(c1, 'A7')
+    c2 =LineChart()
+    c2.title = 'NUmber of Dyevert Cases by Quarter'
+    c2.y_axis.title = '# of cases'
+    c2.x_axis.title = ''
+
+    data2 = Reference(date_sheet, 5, 2, 5, len(quarter_cases))
+    c2.add_data(data2)
+    dates2 = Reference(date_sheet, 4, 2, 4, len(months))
+    c2.set_categories(dates2)
+
+    s2 = c2.series[0]
+    s2.marker.symbol = 'square'
+
+    date_sheet.add_chart(c1, 'G2')
+    date_sheet.add_chart(c2, 'G19')
     wb.save(xlsx_name)
+
     print('DyeMinish report with flagged data finished')
 
 
