@@ -189,13 +189,22 @@ def list_builder(file_names):
                     perc_threshold = row[CUMULATIVE_VOLUME_TO_PATIENT] / row[THRESHOLD_VOLUME] * 100
                 print(row[2], row[END_TIME])
                 if row[2] == '2.1.21' or row[2] == '2.1.24' or row[2] == '2.0.1981' or row[2] == '2.0.2013':
-                    DyeMinishCases.append((row[DATE_OF_PROCEDURE][0:10], row[CASE_ID][-12:-4], row[TOTAL_DURATION],
-                                           row[THRESHOLD_VOLUME], row[ATTEMPTED_CONTRAST_INJECTION_VOLUME],
-                                           row[DIVERTED_CONTRAST_VOLUME], row[CUMULATIVE_VOLUME_TO_PATIENT],
-                                           row[PERCENTAGE_CONTRAST_DIVERTED], perc_threshold,
-                                           to_patient[row[CMSW_CASE_ID] - 1][0], what_if[row[CMSW_CASE_ID] - 1][0],
-                                           what_if[row[CMSW_CASE_ID] - 1][1], row[SERIAL_NUMBER], pmdv,
-                                           row[CMSW_CASE_ID], row[END_TIME][-12:-4]))
+                    if not row[END_TIME] is None:
+                        DyeMinishCases.append((row[DATE_OF_PROCEDURE][0:10], row[CASE_ID][-12:-4], row[TOTAL_DURATION],
+                                            row[THRESHOLD_VOLUME], row[ATTEMPTED_CONTRAST_INJECTION_VOLUME],
+                                            row[DIVERTED_CONTRAST_VOLUME], row[CUMULATIVE_VOLUME_TO_PATIENT],
+                                            row[PERCENTAGE_CONTRAST_DIVERTED], perc_threshold,
+                                            to_patient[row[CMSW_CASE_ID] - 1][0], what_if[row[CMSW_CASE_ID] - 1][0],
+                                            what_if[row[CMSW_CASE_ID] - 1][1], row[SERIAL_NUMBER], pmdv,
+                                            row[CMSW_CASE_ID], row[END_TIME][-12:-4]))
+                    else:
+                        DyeMinishCases.append((row[DATE_OF_PROCEDURE][0:10], row[CASE_ID][-12:-4], row[TOTAL_DURATION],
+                                            row[THRESHOLD_VOLUME], row[ATTEMPTED_CONTRAST_INJECTION_VOLUME],
+                                            row[DIVERTED_CONTRAST_VOLUME], row[CUMULATIVE_VOLUME_TO_PATIENT],
+                                            row[PERCENTAGE_CONTRAST_DIVERTED], perc_threshold,
+                                            to_patient[row[CMSW_CASE_ID] - 1][0], what_if[row[CMSW_CASE_ID] - 1][0],
+                                            what_if[row[CMSW_CASE_ID] - 1][1], row[SERIAL_NUMBER], pmdv,
+                                            row[CMSW_CASE_ID], ''))
                 else:
                     # put end time into datetime object.
                     if row[2] == '2.2.44':
