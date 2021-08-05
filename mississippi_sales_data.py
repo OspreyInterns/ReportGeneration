@@ -77,19 +77,12 @@ def list_builder(file_names):
                     print(row[DATE_OF_PROCEDURE])
                 elif row[ATTEMPTED_CONTRAST_INJECTION_VOLUME] < 20:
                     comment = 'Attempted Volume < 20 mL'
-                if row[CUMULATIVE_VOLUME_TO_PATIENT] <= row[THRESHOLD_VOLUME] \
-                        / 3 <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
-                    color = LIGHT_GREEN
-                elif row[CUMULATIVE_VOLUME_TO_PATIENT] <= row[THRESHOLD_VOLUME] \
-                        * 2/3 <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
+                if row[CUMULATIVE_VOLUME_TO_PATIENT] <= row[THRESHOLD_VOLUME] / 1.5:
                     color = GREEN
-                elif row[CUMULATIVE_VOLUME_TO_PATIENT] <= row[THRESHOLD_VOLUME] \
-                        <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
+                elif row[CUMULATIVE_VOLUME_TO_PATIENT] <= row[THRESHOLD_VOLUME]:
                     color = YELLOW
-                elif row[CUMULATIVE_VOLUME_TO_PATIENT] >= row[THRESHOLD_VOLUME] \
-                        <= row[ATTEMPTED_CONTRAST_INJECTION_VOLUME]:
+                elif row[CUMULATIVE_VOLUME_TO_PATIENT] >= row[THRESHOLD_VOLUME]:
                     color = RED
-
                 else:
                     color = WHITE
                 cases.append((color, row[DATE_OF_PROCEDURE][0:10], row[DATE_OF_PROCEDURE][11:22],
@@ -114,7 +107,7 @@ def write(file_names, cmsw):
     cases.append(('', '', '', '', '', '', '', '', '', ''))
     cases.append(('', '', 'Excluded Cases (not included in above summary)', '', '', '', '', '', '', ''))
     xlsx_name = str(cmsw) + '-data-tables.xlsx'
-    wb = openpyxl.load_workbook('Sales-Template.xlsx')
+    wb = openpyxl.load_workbook('Miss-Sales-Template.xlsx')
     data_sheet = wb.active
     data_sheet.title = 'Sheet1'
     print('Data ready, writing sales report')
@@ -138,11 +131,11 @@ def write(file_names, cmsw):
             line += 1
     data_sheet.cell(row=line-1, column=3).alignment = Alignment(wrapText=False)
     data_sheet.cell(row=line-1, column=3).font = Font(bold=True, size=16)
-    #data_sheet.cell(row=6, column=5, value=total_attempted)
+    data_sheet.cell(row=6, column=5, value=total_attempted)
     data_sheet.cell(row=6, column=5).alignment = Alignment(wrapText=True, horizontal='center')
-    #data_sheet.cell(row=6, column=6, value=total_to_patient)
+    data_sheet.cell(row=6, column=6, value=total_to_patient)
     data_sheet.cell(row=6, column=6).alignment = Alignment(wrapText=True, horizontal='center')
-   # data_sheet.cell(row=6, column=7, value=total_diverted)
+    data_sheet.cell(row=6, column=7, value=total_diverted)
     data_sheet.cell(row=6, column=7).alignment = Alignment(wrapText=True, horizontal='center')
     exclusions = ['Exclusion criteria include', '1. Case duration < 5 mins', '2. 0 mL contrast injected',
                   '3. DyeTect cases', '4. Diverted Vol < 5 mL', '5. Attempted Vol < 20 mL']
@@ -180,7 +173,7 @@ def write(file_names, cmsw):
                 diverted += float(case[6])
 
     percent_saved = round(diverted/attempted*100)
-    prs = Presentation('Slide-Template.pptx')
+    prs = Presentation('Miss-Slide-Template.pptx')
     total = colors[0] + colors[1] + colors[2] + colors[3]
     title = 'N=' + str(total)
     data = CategoryChartData()
