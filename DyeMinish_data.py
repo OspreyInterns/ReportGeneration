@@ -228,6 +228,7 @@ def list_builder(file_names):
                                            what_if[row[CMSW_CASE_ID] - 1][0], what_if[row[CMSW_CASE_ID] - 1][1],
                                            row[SERIAL_NUMBER], pmdv, row[CMSW_CASE_ID], case_end))
 
+    DyeMinishCases.sort(key=sort_by_date)
     return DyeMinishCases
 
 
@@ -510,7 +511,7 @@ def excel_flag_write(file_names, cmsws):
         data_sheet.cell(row=row+2, column=38, value=dvuses[row][4])
         data_sheet.cell(row=row+2, column=39, value=dvuses[row][5])
 
-    date_sheet = wb.create_sheet(title='Cases by Date')
+    date_sheet = wb.create_sheet(title='Cases by Mo & Q')
     dates = case_by_date(file_names)
     months = ['Month']
     month_case_count = ['Cases in Month']
@@ -579,6 +580,24 @@ def excel_flag_write(file_names, cmsws):
 
     date_sheet.add_chart(c1, 'G2')
     date_sheet.add_chart(c2, 'G19')
+
+    summary_sheet = wb.create_sheet(title='DyeVert - Summary Analytics')
+    renal_values = []
+    threshold_values = []
+    att_cont_values = []
+    div_contrast_values = []
+    perc_contrast_diverted_values = []
+    cummulative_vol_values = []
+    percent_threshold_values = []
+    for case in cases:
+        renal_values.append(case[3]/3)
+        threshold_values.append(case[3])
+        att_cont_values.append(case[4])
+        div_contrast_values.append(case[5])
+        perc_contrast_diverted_values.append(case[7])
+        cummulative_vol_values.append(case[6])
+        percent_threshold_values.append(case[8])
+    ws = wb.worksheets[3]
     wb.save(xlsx_name)
 
     print('DyeMinish report with flagged data finished')
